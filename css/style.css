@@ -1,0 +1,421 @@
+/* ========= */
+/* CSS RESET */
+/* ========= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-y: scroll;
+}
+
+button > label {
+  cursor: pointer;
+}
+
+a:visited { color:blue; }
+
+
+
+/* ======= */
+/* UTILITY */
+/* ======= */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.col {
+  flex: 1;
+  flex-basis: 300px;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.red {
+  color: crimson;
+}
+
+.blue {
+  color: cornflowerblue;
+}
+
+.green {
+  color: seagreen;
+}
+
+.clearfix {
+   overflow: auto;
+}
+
+.clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+
+/* ========== */
+/* COMPONENTS */
+/* ========== */
+
+#page {
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+
+/* Site Header */
+#site-header {
+  display: flex;
+  /* height: 50px; */
+}
+
+#site-logo {
+  height: 100%;
+  margin-right: 0.3em;
+}
+
+#brand {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
+  height: 50px;
+  min-width: 150px;
+}
+
+#site-name {
+  font-family: serif;
+  font-style: italic;
+  color: darkslateblue;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+#site-name > small {
+  color: orangered;
+  display: block;
+}
+
+
+/* Site Navigation */
+#site-nav {
+  display: flex;
+}
+
+#site-nav > nav {
+  display: flex;
+  flex-wrap: wrap;
+  /* margin: 0.2em 0.5em; */
+  align-items: center;
+}
+
+#site-nav a {
+  flex: 1;
+  white-space: nowrap;
+  padding: 0.3em 1em 0.4em;
+  line-height: 1em;
+}
+
+
+/* Site Content */
+main {
+  padding: 0;
+}
+
+footer {
+  display: flex;
+  padding: 0.5em;
+  background: whitesmoke;
+  margin-top: 1em;
+  align-items: center;
+}
+
+
+
+/* =============== */
+/* COMPONENT TYPES */
+/* =============== */
+
+.container {
+  display: inline-block;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+
+/* Buttons */
+.btn:hover, nav a:hover {
+  background-color: whitesmoke;
+}
+
+.btn {
+  color: blue;
+  border: 1px solid blue;
+  white-space: nowrap;
+  padding: 0.3em 1em 0.4em;
+  line-height: 1em;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-link {
+  padding: 1px 0.3em;
+}
+
+
+/* Modals */
+#toggle-modal:checked + .modal {
+  display: block;
+}
+
+.modal {
+  display: none;
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: no-drop;
+}
+
+.modal-inner {
+  background: white;
+  border: 1px solid gainsboro;
+  margin: 4em auto;
+  max-width: 640px;
+  padding: 1em;
+  position: relative;
+  z-index: 100;
+  box-shadow: 0 0 10px 0px gainsboro;
+  cursor: default;
+}
+
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: whitesmoke;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+
+/* Fields */
+.field {
+  margin-bottom: 1.5em;
+}
+
+.field label {
+  display: block;
+  font-weight: bold;
+  font-family: sans-serif;
+  font-size: 0.8em;
+  margin-bottom: 2px;
+  color: #222;
+}
+
+.field input, .field textarea, .field select {
+  min-width: 280px;
+  padding: 0.3em 0.5em;
+  border: 1px solid gainsboro;
+  border-radius: 3px;
+}
+
+.field .checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox input {
+  min-width: auto;
+  margin-right: 1em;
+  cursor: pointer;
+}
+
+.radio input {
+  min-width: auto;
+}
+
+.number input {
+  min-width: auto;
+  max-width: 12em;
+}
+
+.currency input {
+  min-width: auto;
+  max-width: 12em;
+}
+
+.input-group {
+  display: flex;
+  /* align-items: center; */
+}
+
+.add-on {
+  background: #eee;
+  border: 1px solid gainsboro;
+  padding: 0.2em 0.5em;
+}
+
+.add-on-left {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.add-on-left+input {
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.toggle+.container {
+  background: lavender;
+  padding: 1em;
+  margin-bottom: 1.5em;
+  margin-left: 0.2em;
+}
+
+.container .field:last-of-type {
+  margin: 0;
+}
+
+
+/* Tabs */
+
+.tabbar {
+  border-bottom: 1px solid gainsboro;
+  margin: 1.34em 0;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tabs li {
+  padding: 0;
+  position: relative;
+  margin: 3px 0 0 3px;
+  display: inline-block;
+  height: 1.67em;
+}
+
+.tabs label {
+  background: whitesmoke;
+  border: 1px solid gainsboro;
+  border-bottom: 0;
+  cursor: pointer;
+  padding: 0.3em 1.34em;
+  position: relative;
+  top: 5px;
+}
+
+.tabs .active label {
+  background: white;
+  border-top-color: orangered;
+  border-top-width: 2px;
+  cursor: default;
+  padding: 0.34em 1.5em;
+  top: 5px;
+  z-index: 1;
+}
+
+.tab-select {
+  position: absolute;
+  left: -99999;
+  opacity: 0;
+  height: 0;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-select:checked+.tab-content {
+  display: block;
+}
+
+/* List Items */
+.list-item {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid gainsboro;
+  padding: 0.15em 0;
+  flex-wrap: wrap;
+}
+
+.list-item:hover {
+  background: whitesmoke;
+}
+
+.list-item > span {
+  display: inline-block;
+  margin-right: 1em;
+  white-space: nowrap;
+}
+
+.list-item .actions > * {
+  margin: 0.15em;
+}
+
+.btn-delete {
+  display: none;
+}
+
+.showdelete .btn-delete {
+  display: inline-block;
+}
+
+
+/* Action Bars */
+.actionbar {
+  margin-top: 1.5em;
+}
+
+
+.list-header {
+  display: flex;
+  margin: 1.5em 0;
+}
+
+.list-header h3 {
+  margin: 0;
+}
+
+.list-header input {
+  width: 3em;
+  text-align: center;
+}
+
+
+.list-footer {
+  display: flex;
+}
+
+.list-footer label {
+  align-items: center;
+  display: flex;
+  margin-left: auto;
+}
