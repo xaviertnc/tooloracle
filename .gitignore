@@ -1,3 +1,5 @@
 *sublime*
 .env-local
 app/storage
+adminer
+bkp
