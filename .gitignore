@@ -1,2 +1,3 @@
 *sublime*
 .env-local
+app/storage
