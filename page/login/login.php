@@ -1,9 +1,7 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php //page/login/login.php
 
 
-// DB::connect($app->dbConnection);
+if ( ! defined('__APP_START__')) die();
 
 
 if ($request->method == 'POST')
@@ -13,10 +11,10 @@ if ($request->method == 'POST')
 
   if (isset($_POST['login']))
   {
-    if ($_POST['username'] == $app->auth->username and
-        $_POST['password'] == $app->auth->password)
+    if ($_POST['username'] == $auth->username and
+        $_POST['password'] == $auth->password)
     {
-      $goto = '/pages/tool';
+      $goto = 'admin';
       $app->state['loggedIn'] = true;
     }
     else
@@ -28,7 +26,7 @@ if ($request->method == 'POST')
 
   elseif (isset($_POST['logout']))
   {
-    $goto = '/pages/login';
+    $goto = 'login';
     $app->state['loggedIn'] = false;
     unset($app->state['loggedIn']);
   }
@@ -37,7 +35,6 @@ if ($request->method == 'POST')
 
   header('location:' . $goto);
   exit();
-
 }
 
 

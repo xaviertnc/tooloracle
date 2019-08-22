@@ -1,9 +1,10 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php //page/admin/admin.php
 
 
-if ( ! $app->auth->loggedIn) { header('location:/pages/login'); }
+if ( ! defined('__APP_START__')) die(); // Silence is golden
+
+
+if ( ! $auth->loggedIn) { header('location:login'); }
 
 
 DB::connect($app->dbConnection);
@@ -62,24 +63,29 @@ if (isset($_GET['ajax']))
 }
 
 
+// PAGE
 $page = new stdClass();
-$page->title = 'Tools';
+$page->title = 'Tools Admin';
 
 
+// ALERT MESSAGE
+$message = array_get($app->state, 'message', null);
+unset($app->state['message']);
+
+
+// PAGINATION
 $pagination = new stdClass();
 $pagination->itemsPerPage = 10;
-$pagination->baseUri = 'pages/tool';
+$pagination->baseUri = 'admin';
 $pagination->page = array_get($_GET, 'page', 1);
 $pagination->totalItems = DB::query('tools')->count();
 $pagination->offset = ($pagination->page - 1) * $pagination->itemsPerPage;
 $pagination->pages = ceil($pagination->totalItems / $pagination->itemsPerPage);
 
+
+// DATA
 $tools = DB::query('tools')->limit($pagination->offset, $pagination->itemsPerPage)->get();
-
 $categories = DB::select('tool_categories');
-
-$message = array_get($app->state, 'message', null);
-unset($app->state['message']);
 
 
 include $app->rootPath . '/header.php';
@@ -87,7 +93,7 @@ include $app->rootPath . '/header.php';
 ?>
 <div class="page home">
 
-  <h2>List TOOLS</h2>
+  <h2>ADMIN</h2>
 
   <?php if ($message):?>
   <h1><?=$message?></h1>
@@ -157,12 +163,12 @@ include $app->rootPath . '/header.php';
 
     <div class="list-item">
       <div class="col1" style="min-width:40px;"><?=($pagination->offset + $index + 1) . '. '?></div>
-      <div class="col2"><a href="/pages/tool/edit.php?id=<?=$tool->id?>"><?=$tool->name?></a></div>
+      <div class="col2"><a href="admin/tools/edit?id=<?=$tool->id?>"><?=$tool->name?></a></div>
       <div class="actions" style="margin-left:auto;display:flex;align-items:center">
         <a class="btn btn-link" href="<?=$tool->website?>" target="_blank">
           <i class="fa fa-globe blue" aria-hidden="true"></i>
         </a>
-        <a class="btn btn-link" href="/pages/tool/edit.php?id=<?=$tool->id?>">
+        <a class="btn btn-link" href="admin/tools/edit?id=<?=$tool->id?>">
           <i class="fa fa-pencil" aria-hidden="true"></i>
         </a>
         <button type="button" class="btn-delete">
@@ -189,7 +195,7 @@ include $app->rootPath . '/header.php';
     </label>
   </section>
 
-  <script src="/js/pure-select.min.js"></script>
+  <script src="js/pure-select.min.js"></script>
 
   <script>
     window.App = {
@@ -220,7 +226,7 @@ include $app->rootPath . '/header.php';
 
       fetchSubCategories: function(category_id) {
         console.log('Hi, fetching sub-categories!');
-        this.get('./?ajax=getSubCategories&id=' + category_id, function(optionsData) {
+        this.get('?ajax=getSubCategories&id=' + category_id, function(optionsData) {
           var options = [];
           var elSelect = document.getElementById('subcategories');
           var elNullOption = elSelect.firstElementChild;
@@ -249,7 +255,7 @@ include $app->rootPath . '/header.php';
       }
     }
 
-    App.get('./?ajax=getFeatures', function(features) {
+    App.get('?ajax=getFeatures', function(features) {
       // console.log('Ajax Resp - Features =', features);
       App.featuresSelect = new TagSelect('#features-select', {
         options: features,
@@ -280,13 +286,11 @@ $_SESSION[$app->id] = $app->state;
 //   <li>Unbounce</li>
 //   <li>LeadPages</li>
 //   <li>Wordpress</li>
-//   <li>Mailchimp</li>
 //   <li>KickoffLabs</li>
 //   <li>Upviral</li>
 //   <li>Infusionsoft</li>
 //   <li>Clickfunnels</li>
 //   <li>OntraPort</li>
-//   <li>Autopilot</li>
 //   <li>Campaigner</li>
 //   <li>Zapier</li>
 //   <li>Heap</li>

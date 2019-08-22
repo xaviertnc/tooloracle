@@ -1,15 +1,10 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php //pages/admin/tools/edit/edit.php
 
 
-if ( ! $app->auth->loggedIn) { header('location:/pages/login'); }
+if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
-$tool_id = array_get($_GET, 'id', 0);
-
-
-DB::connect($app->dbConnection);
+if ( ! $auth->loggedIn) { header('location:login'); }
 
 
 function cleanDecimals(&$data, array $keys) {
@@ -23,6 +18,12 @@ function setBools(&$data, array $keys) {
     $data[$key] = isset($data[$key]) ? 1 : 0;
   }
 }
+
+
+$tool_id = array_get($_GET, 'id', 0);
+
+
+DB::connect($app->dbConnection);
 
 
 if ($request->method == 'POST')
@@ -354,7 +355,7 @@ include $app->rootPath . '/header.php';
             <?php endif; ?>
           </span>
           <span style="margin-left:auto">
-            <a class="btn btn-link" href="/pages/plan/edit.php?id=<?=$plan->id?>">
+            <a class="btn btn-link" href="admin/plans/edit?id=<?=$plan->id?>">
               <i class="fa fa-pencil" aria-hidden="true"></i>
             </a>
           </span>
@@ -408,7 +409,7 @@ include $app->rootPath . '/header.php';
     <br>
   </form>
 
-  <script src="/js/pure-select.min.js"></script>
+  <script src="js/pure-select.min.js"></script>
 
   <script>
     window.App = {
@@ -459,7 +460,7 @@ include $app->rootPath . '/header.php';
 
       fetchSubCategories: function(category_id) {
         console.log('Hi, fetching sub-categories!');
-        this.fetch('/pages/tool/edit.php?ajax=getSubCategories&id=' + category_id, function(optionsData) {
+        this.fetch('admin/tools/edit?ajax=getSubCategories&id=' + category_id, function(optionsData) {
           var options = [];
           var elSelect = document.getElementById('subcategories');
           var elNullOption = elSelect.firstElementChild;
@@ -475,7 +476,7 @@ include $app->rootPath . '/header.php';
       }
     };
 
-    App.fetch('/pages/tool/edit.php?ajax=getFeatures&id=<?=$tool_id?>', function(resp) {
+    App.fetch('admin/tools/edit?ajax=getFeatures&id=<?=$tool_id?>', function(resp) {
       console.log('Ajax Resp:', resp);
       App.toolFeaturesSelect = new SelectPure('#tool-features-select', {
         options: resp.options,

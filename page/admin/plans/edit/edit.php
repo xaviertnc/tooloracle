@@ -1,15 +1,10 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php  //pages/admin/plans/edit/edit.php
 
 
-if ( ! $app->auth->loggedIn) { header('location:/pages/login'); }
+if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
-$plan_id = array_get($_GET, 'id', 0);
-
-
-DB::connect($app->dbConnection);
+if ( ! $auth->loggedIn) { header('location:login'); }
 
 
 function cleanDecimals(&$data, array $keys) {
@@ -23,6 +18,12 @@ function setBools(&$data, array $keys) {
     $data[$key] = isset($data[$key]) ? 1 : 0;
   }
 }
+
+
+$plan_id = array_get($_GET, 'id', 0);
+
+
+DB::connect($app->dbConnection);
 
 
 if ($request->method == 'POST')
@@ -258,7 +259,7 @@ include $app->rootPath . '/header.php';
             <?=$metric->max > 0 ? ' - '.Format::decimal($metric->max, 0, 0) : ''?>
           </span>
           <span style="margin-left:auto">
-            <a class="btn btn-link" href="/pages/metric/edit.php?id=<?=$metric->id?>">
+            <a class="btn btn-link" href="admin/metrics/edit?id=<?=$metric->id?>">
               <i class="fa fa-pencil" aria-hidden="true"></i>
             </a>
           </span>
@@ -308,7 +309,7 @@ include $app->rootPath . '/header.php';
     <br>
   </form>
 
-  <script src="/js/pure-select.min.js"></script>
+  <script src="js/pure-select.min.js"></script>
 
   <script>
     window.App = {
@@ -358,7 +359,7 @@ include $app->rootPath . '/header.php';
       }
     };
 
-    App.fetch('/pages/plan/edit.php?ajax=getFeatures&id=<?=$plan_id?>', function(resp) {
+    App.fetch('admin/plans/edit?ajax=getFeatures&id=<?=$plan_id?>', function(resp) {
       console.log('Ajax Resp:', resp);
       App.planFeaturesSelect = new SelectPure('#plan-features-select', {
         options: resp.options,

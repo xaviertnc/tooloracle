@@ -1,6 +1,7 @@
-<?php // Tool Oricle - Front Controller
+<?php //pages/about/about.php
 
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+
+if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
 $page = new stdClass();

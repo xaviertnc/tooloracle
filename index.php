@@ -1,198 +1,54 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php // Tool Oracle - Front Controller
 
 
-DB::connect($app->dbConnection);
+define('__APP_START__', true);
 
 
-if (isset($_GET['ajax']))
-{
-  switch($_GET['ajax'])
-  {
-    case 'getSubCategories':
-      $data = DB::select('tool_subcategories WHERE category_id=?',
-        [array_get($_GET, 'id', 0)]);
-      break;
-    case 'getFeatures':
-      $data = array_map(function($feature) {
-        return ['value' => $feature->id, 'label' => $feature->name];
-      }, DB::select('features'));
-      break;
-    default:
-      $data = ['error' => 'Oops, something went wrong!'];
-  }
-  header('Content-type: application/json');
-  header('Cache-Control: no-cache, must-revalidate');
-  header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-  echo json_encode($data);
-  exit();
+function array_get(array $array, $key, $default = null) {
+  return isset($array[$key]) ? $array[$key] : $default;
 }
 
 
-// PAGE
-$page = new stdClass();
-$page->title = 'Home';
+register_shutdown_function(function() {
+  if (error_get_last() !== null) {
+    ob_clean();
+    http_response_code(500);
+    echo '<div class="error server-error"><h3>Oops, something went wrong!</h3>', PHP_EOL;
+    if (__DEBUG__) { echo '<hr><pre>', print_r(error_get_last(), true), '</pre>'; }
+    echo PHP_EOL, '</div>';
+  }
+});
 
 
-// PAGINATION
-$pagination = new stdClass();
-$pagination->itemsPerPage = 10;
-$pagination->baseUri = '';
-$pagination->page = array_get($_GET, 'page', 1);
-$pagination->totalItems = DB::query('tools')->count();
-$pagination->offset = ($pagination->page - 1) * $pagination->itemsPerPage;
-$pagination->pages = ceil($pagination->totalItems / $pagination->itemsPerPage);
+session_start();
 
 
-// DATA
-$tools = DB::query('tools')->limit($pagination->offset, $pagination->itemsPerPage)->get();
-$categories = DB::select('tool_categories');
+// GLOBALS
+$log     = new stdClass();
+$app     = new stdClass();
+$auth    = new stdClass();
+$request = new stdClass();
 
 
-$message = array_get($app->state, 'message', null);
-unset($app->state['message']);
+require '.env-local';
 
 
-include $app->rootPath . '/header.php';
-
-?>
-<div class="page home">
-
-  <h2>Welcome to TOOL ORACLE</h2>
-
-  <?php if ($message):?>
-  <h1><?=$message?></h1>
-  <?php endif; ?>
-
-  <section>
-    <div class="list-header">
-      <span style="margin-left:auto;display:flex;align-items:center">
-        <?=$view->paginationLinks($pagination)?>
-      </span>
-    </div>
-    <div class="list-item">
-      <div style="flex:0.5;"><b>#</b></div>
-      <div style="flex:2;"><b>Tool Name</b></div>
-      <div style="flex:1;text-align:center"><b>Free Version</b></div>
-      <div style="flex:1;text-align:center"><b>Free Trail</b></div>
-      <div style="flex:1;text-align:center"><b>CCard Req.</b></div>
-      <div style="flex:2;text-align:center"><b>Start Price <small>(mth)</small></b></div>
-      <div style="flex:1;text-align:center"><b>Rating</b></div>
-    </div>
-    <?php $yes = '<i class="fa fa-check green"></i>&nbsp;'; ?>
-    <?php $no = '<i class="fa fa-times red"></i>&nbsp;'; ?>
-    <?php foreach($tools as $index => $tool): ?>
-
-    <div class="list-item">
-      <div style="flex:0.5;"><?=($pagination->offset + $index + 1) . '. '?></div>
-      <div style="flex:2;"><a href="<?=$tool->website?>" target="_blank"><?=$tool->name?></a></div>
-      <div style="flex:1;text-align:center"><?=$tool->free_version?$yes:$no?></div>
-      <div style="flex:1;text-align:center"><?=$tool->free_trail?$yes:$no?></div>
-      <div style="flex:1;text-align:center"><?=$tool->card_required?$yes:$no?></div>
-      <div style="flex:2;text-align:center"><?=$tool->start_price?'$'.$tool->start_price:''?></div>
-      <div style="flex:1;text-align:center"><?=$tool->oracle_rating?></div>
-    </div>
-    <?php endforeach; ?>
-    <?php if( ! $tools):?>
-
-    <div class="list-item">Nothing to display...</div>
-    <?php endif; ?>
-  </section>
-
-  <section class="list-footer actionbar">
-    <small>
-      Showing <?=$pagination->offset + 1?> -
-      <?=min($pagination->totalItems, $pagination->offset + $pagination->itemsPerPage)?> of
-      <?=$pagination->totalItems?>
-    </small>
-    <span style="margin-left:auto;display:flex;align-items:center">
-      <?=$view->paginationLinks($pagination)?>
-    </span>
-  </section>
-
-  <script src="/js/pure-select.min.js"></script>
-
-  <script>
-    window.App = {
-
-      Option: function (value, label) {
-        this.el = document.createElement('option');
-        this.el.value = value;
-        this.el.innerHTML = label;
-      },
-
-      get: function(url, onSuccess) {
-        var oReq = new XMLHttpRequest();
-        oReq.onload = function reqListener() {
-          var data = JSON.parse(this.responseText);
-          console.log(data);
-          onSuccess(data);
-        }
-        oReq.onerror = function reqError(err) {
-          console.log('Fetch Error :-S', err);
-        };
-        oReq.open('get', url, true);
-        oReq.send();
-      },
-
-      goto: function(url) {
-        window.location.href = url;
-      },
-
-      fetchSubCategories: function(category_id) {
-        console.log('Hi, fetching sub-categories!');
-        this.get('./?ajax=getSubCategories&id=' + category_id, function(optionsData) {
-          var options = [];
-          var elSelect = document.getElementById('subcategories');
-          var elNullOption = elSelect.firstElementChild;
-          elSelect.innerHTML = null;
-          elSelect.appendChild(elNullOption);
-          optionsData.forEach(function(optionData) {
-            options.push(new App.Option(optionData.id, optionData.name));
-          });
-          options.forEach(function(option) {
-            elSelect.appendChild(option.el);
-          });
-        });
-      }
-
-    };
-
-    class TagSelect extends SelectPure {
-      _sortOptions(event) {
-        this._options.forEach(_option => {
-          if (!_option.get().textContent.toLowerCase().match(event.target.value.toLowerCase())) {
-            _option.addClass("select-pure__option--hidden");
-            return;
-          }
-          _option.removeClass("select-pure__option--hidden");
-        });
-      }
-    }
-
-    App.get('./?ajax=getFeatures', function(features) {
-      // console.log('Ajax Resp - Features =', features);
-      App.featuresSelect = new TagSelect('#features-select', {
-        options: features,
-        value: [],
-        multiple: true,
-        autocomplete: true,
-        icon: "fa fa-times",
-        onChange: function(value) {
-          console.log(value);
-          let elSelect = App.featuresSelect._parent.get();
-          elSelect.nextElementSibling.value = JSON.stringify(value);
-        }
-      });
-    });
-
-  </script>
-
-</div>
-<?php
-
-include $app->rootPath . '/footer.php';
+// APP SERVICES
+require $app->servicesPath . '/Logger.php';
+require $app->servicesPath . '/Database.php';
+require $app->servicesPath . '/Format.php';
+require $app->servicesPath . '/View.php';
 
 
-$_SESSION[$app->id] = $app->state;
+// GET PAGE CONTROLLER
+$app->currentPage = $request->parts[count($request->parts)-1];
+$app->controllerPath = $app->pagesPath . '/' . $request->pageRef;
+$app->controller = $app->controllerPath . '/' . $app->currentPage . '.php';
+
+if ( ! file_exists($app->controller)) {
+  $app->controllerPath = $app->pagesPath . '/error/404';
+  $app->controller = $app->controllerPath . '/404.php';
+}
+
+
+require $app->controller;

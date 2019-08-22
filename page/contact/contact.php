@@ -1,9 +1,7 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php //pages/contact/contact.php
 
 
-// DB::connect($app->dbConnection);
+if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
 if (isset($_GET['ajax']))

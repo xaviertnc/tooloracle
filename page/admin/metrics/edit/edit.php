@@ -1,9 +1,10 @@
-<?php // Tool Oricle - Front Controller
-
-include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
+<?php //pages/admin/metrics/edit/edit.php
 
 
-if ( ! $app->auth->loggedIn) { header('location:/pages/login'); }
+if ( ! defined('__APP_START__')) die(); // Silence is golden
+
+
+if ( ! $auth->loggedIn) { header('location:login'); }
 
 
 $metric_id = array_get($_GET, 'id', 0);
