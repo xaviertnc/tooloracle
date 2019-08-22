@@ -23,26 +23,22 @@ session_start();
 
 
 $app = new stdClass();
+$app->id = 'tooloracle';
 
-$app->id           = 'tooloracle';
 
-$app->uriBase      = '/';
-$app->rootPath     = array_get($_SERVER, 'DOCUMENT_ROOT', __DIR__);
-$app->appPath      = $app->rootPath . '/app';
-$app->vendorsPath  = $app->appPath  . '/vendors';
-$app->servicesPath = $app->appPath  . '/services';
-$app->storagePath  = $app->appPath  . '/storage';
-$app->timezone     = 'Africa/Johannesburg';
+// RESTORE APP STATE
+$app->state = array_get($_SESSION, $app->id, []);
 
-$app->dbConnection = [
-  'DBHOST' => 'localhost',
-  'DBNAME' => 'tooloracle',
-  'DBUSER' => 'root',
-  'DBPASS' => 'root'
-];
+
+require '.env-local';
 
 
 date_default_timezone_set($app->timezone);
+
+
+$app->vendorsPath  = $app->appPath  . '/vendors';
+$app->servicesPath = $app->appPath  . '/services';
+$app->storagePath  = $app->appPath  . '/storage';
 
 
 // HTTP REQUEST
@@ -59,23 +55,9 @@ $request->parts = explode('/', $request->parts[0]);
 $app->request = $request;
 
 
-// RESTORE APP STATE
-$app->state = array_get($_SESSION, $app->id, []);
-
-
-$app->auth = new stdClass();
-$app->auth->loggedIn = array_get($app->state, 'loggedIn', false);
-$app->auth->username = 'admin';
-$app->auth->password = 'admin';
-
-
 // APP SERVICES
 require $app->servicesPath . '/Logger.php';
 require $app->servicesPath . '/Session.php';
 require $app->servicesPath . '/Database.php';
 require $app->servicesPath . '/Format.php';
 require $app->servicesPath . '/View.php';
-
-// PAGE
-$page = new stdClass();
-$page->title = 'Home';

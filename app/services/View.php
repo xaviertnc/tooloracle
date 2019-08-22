@@ -34,9 +34,9 @@ class View {
   }
 
 
-  public function pagerLink($page, $icon, $disabled = false)
+  public function pagerLink($baseUri, $page, $icon, $disabled = false)
   {
-    $href= "?page=$page";
+    $href= "$baseUri?page=$page";
     return '<a class="btn btn-link' . ($disabled ? ' disabled' : '') . '" ' .
      'href="' . $href . '"><i class="fa fa-' . $icon . '" aria-hidden="true"></i></a>';
   }
@@ -46,11 +46,12 @@ class View {
   {
     $page = $pagination->page;
     $pages = $pagination->pages;
-    return $this->pagerLink(1, 'fast-backward', $page <= 1) . '&nbsp;' .
-      $this->pagerLink($page > 1 ? $page - 1 : $page, 'backward', $page <= 1) . '&nbsp;&nbsp;' .
+    $uri = $pagination->baseUri;
+    return $this->pagerLink($uri, 1, 'fast-backward', $page <= 1) . '&nbsp;' .
+      $this->pagerLink($uri, $page > 1 ? $page - 1 : $page, 'backward', $page <= 1) . '&nbsp;&nbsp;' .
       'Page:&nbsp;<input type="text" value="'. $page .'" name="page">&nbsp;of&nbsp;' . $pages . '&nbsp;' .
-      $this->pagerLink($page < $pages ? $page + 1 : $page, 'forward', $page >= $pages) . '&nbsp;' .
-      $this->pagerLink($pages, 'fast-forward', $page >= $pages);
+      $this->pagerLink($uri, $page < $pages ? $page + 1 : $page, 'forward', $page >= $pages) . '&nbsp;' .
+      $this->pagerLink($uri, $pages, 'fast-forward', $page >= $pages);
   }
 
 }

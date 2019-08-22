@@ -52,7 +52,7 @@ if ($request->method == 'POST')
     DB::insertInto('plans', $data);
     $plan_id = DB::lastInsertId();
     $feature_ids = json_decode($_POST['plan_features']);
-    foreach($feature_ids as $feature_id) {
+    foreach($feature_ids?:[] as $feature_id) {
       DB::insertInto('plan_features', [
         'plan_id' => $plan_id,
         'feature_id' => $feature_id
@@ -95,6 +95,10 @@ if (isset($_GET['ajax']))
   echo json_encode($data);
   exit();
 }
+
+
+$page = new stdClass();
+$page->title = 'Edit Tool';
 
 
 $planSizes = DB::query('plan_sizes')->getBy('id');
@@ -324,22 +328,23 @@ include $app->rootPath . '/header.php';
         </button>
       </div>
       <div class="plans">
+        <?php $yes = '<i class="fa fa-check green"></i>&nbsp;'; ?>
+        <?php $no = '<i class="fa fa-times red"></i>&nbsp;'; ?>
         <?php foreach($toolPlans as $plan): ?>
         <?php $planSize = array_get($planSizes, $plan->size_id); ?>
         <?php $billingType = array_get($billingTypes, $plan->billing_type_id); ?>
-        <?php $yes = '<i class="fa fa-check green"></i>&nbsp;'; ?>
-        <?php $no = '<i class="fa fa-times red"></i>&nbsp;'; ?>
         <div class="plan list-item">
           <span style="flex:1;min-width:65px"><?=$plan->name?></span>
           <span style="flex:2;min-width:130px;padding:0.3em 0">
             <?php if($plan->size_id == 1):?>
             $0
             <?php else:?>
-            $<?=Format::decimal($plan->price_min, '', 2)?> -
-            $<?=Format::decimal($plan->price_max, '', 2)?> <small><i>/ <?=$billingType->name?></i></small>
+            $<?=Format::decimal($plan->price_min, '', 2)?>
+            <?=$plan->price_max > 0 ? ' - $' . Format::decimal($plan->price_max, '', 2) : ''?>
+            <small><i>/ <?=$billingType->name?></i></small>
             <?php endif; ?>
           </span>
-          <span style="flex:2;min-width:130px"><?=$plan->description?></span>
+          <span style="flex:2;min-width:130px"><?=nl2br($plan->description)?></span>
           <span style="flex:2;min-width:130px">
             <?php if($plan->size_id == 1):?>
             -

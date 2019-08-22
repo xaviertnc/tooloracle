@@ -3,7 +3,7 @@
 include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
 
 
-DB::connect($app->dbConnection);
+// DB::connect($app->dbConnection);
 
 
 if (isset($_GET['ajax']))
@@ -19,6 +19,10 @@ if (isset($_GET['ajax']))
   echo json_encode($data);
   exit();
 }
+
+
+$page = new stdClass();
+$page->title = 'Contact Us';
 
 
 $message = array_get($app->state, 'message', null);

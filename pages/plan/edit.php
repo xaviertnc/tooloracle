@@ -84,6 +84,10 @@ if (isset($_GET['ajax']))
 }
 
 
+$page = new stdClass();
+$page->title = 'Edit Plan';
+
+
 $metricTypes = DB::query('metric_types')->getBy('id');
 
 $planSizes = DB::query('plan_sizes')->getBy('id');
@@ -139,7 +143,7 @@ include $app->rootPath . '/header.php';
         </div>
         <div class="field">
           <label>Type</label>
-          <select name="metric[size_id]" required>
+          <select name="metric[type_id]" required>
             <option value="0">- Select Type -</option>
             <?php foreach($metricTypes as $metricType): ?>
             <option value="<?=$metricType->id?>"><?=$metricType->name?></option>
@@ -250,7 +254,8 @@ include $app->rootPath . '/header.php';
           <span style="flex:1;min-width:80px"><?=$metric->name?></span>
           <span style="flex:2;min-width:130px"><?=$metric->description?></span>
           <span style="flex:2;min-width:130px;padding:0.3em 0">
-            <?=Format::decimal($metric->min, 0, 0)?> - <?=Format::decimal($metric->max, 0, 0)?>
+            <?=Format::decimal($metric->min, 0, 0)?>
+            <?=$metric->max > 0 ? ' - '.Format::decimal($metric->max, 0, 0) : ''?>
           </span>
           <span style="margin-left:auto">
             <a class="btn btn-link" href="/pages/metric/edit.php?id=<?=$metric->id?>">

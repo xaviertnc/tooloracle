@@ -57,6 +57,9 @@ if (isset($_GET['ajax']))
 }
 
 
+$page = new stdClass();
+$page->title = 'Edit Metric';
+
 $metricTypes = DB::query('metric_types')->getBy('id');
 
 $metric = DB::first('metrics', 'WHERE id=?', [$metric_id]);

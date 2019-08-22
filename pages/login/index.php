@@ -3,7 +3,7 @@
 include $_SERVER['DOCUMENT_ROOT'] . '/bootstrap.php';
 
 
-DB::connect($app->dbConnection);
+// DB::connect($app->dbConnection);
 
 
 if ($request->method == 'POST')
@@ -39,6 +39,10 @@ if ($request->method == 'POST')
   exit();
 
 }
+
+
+$page = new stdClass();
+$page->title = 'Login';
 
 
 $message = array_get($app->state, 'message', null);

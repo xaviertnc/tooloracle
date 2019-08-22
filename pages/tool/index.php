@@ -24,7 +24,7 @@ if ($request->method == 'POST') {
 
   $feature_ids = json_decode($_POST['features']);
 
-  foreach($feature_ids as $feature_id) {
+  foreach($feature_ids?:[] as $feature_id) {
     DB::insertInto('tool_features', [
       'tool_id' => $tool_id,
       'feature_id' => $feature_id
@@ -61,8 +61,14 @@ if (isset($_GET['ajax']))
   exit();
 }
 
+
+$page = new stdClass();
+$page->title = 'Tools';
+
+
 $pagination = new stdClass();
 $pagination->itemsPerPage = 10;
+$pagination->baseUri = 'pages/tool';
 $pagination->page = array_get($_GET, 'page', 1);
 $pagination->totalItems = DB::query('tools')->count();
 $pagination->offset = ($pagination->page - 1) * $pagination->itemsPerPage;

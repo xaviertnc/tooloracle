@@ -412,10 +412,16 @@ footer {
 
 .list-footer {
   display: flex;
+  margin: 1.5em 0;
 }
 
 .list-footer label {
   align-items: center;
   display: flex;
   margin-left: auto;
+}
+
+.list-footer input {
+  width: 3em;
+  text-align: center;
 }
