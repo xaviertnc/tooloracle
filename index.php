@@ -11,7 +11,6 @@ function array_get(array $array, $key, $default = null) {
 
 register_shutdown_function(function() {
   if (error_get_last() !== null) {
-    ob_clean();
     http_response_code(500);
     echo '<div class="error server-error"><h3>Oops, something went wrong!</h3>', PHP_EOL;
     if (__DEBUG__) { echo '<hr><pre>', print_r(error_get_last(), true), '</pre>'; }
