@@ -64,12 +64,14 @@ include $app->rootPath . '/header.php';
 
     <div class="list-item">
       <div style="flex:0.5;"><?=($pagination->offset + $index + 1) . '. '?></div>
-      <div style="flex:2;"><a href="<?=$tool->website?>" target="_blank"><?=$tool->name?></a></div>
+      <div style="flex:2;"><a href="tool?id=<?=$tool->id?>"><?=$tool->name?></a></div>
       <div style="flex:1;text-align:center"><?=$tool->free_version?$yes:$no?></div>
       <div style="flex:1;text-align:center"><?=$tool->free_trail?$yes:$no?></div>
       <div style="flex:1;text-align:center"><?=$tool->card_required?$yes:$no?></div>
       <div style="flex:2;text-align:center"><?=$tool->start_price?'$'.$tool->start_price:''?></div>
-      <div style="flex:1;text-align:center"><?=$tool->oracle_rating?></div>
+      <div style="flex:1;text-align:center;--rating:<?=$tool->oracle_rating/2?>;" class="stars"
+          aria-label="Rating of this product is <?=$tool->oracle_rating/2?> out of 5.">
+      </div>
     </div>
     <?php endforeach; ?>
     <?php if( ! $tools):?>

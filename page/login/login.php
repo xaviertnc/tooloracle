@@ -49,7 +49,7 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="page about">
+<div class="page login">
 
   <br>
 

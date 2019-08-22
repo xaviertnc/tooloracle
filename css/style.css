@@ -426,3 +426,32 @@ footer {
   width: 3em;
   text-align: center;
 }
+
+
+/* Stars */
+@charset "UTF-8";
+:root {
+  --star-size: 28px;
+  --star-background: orange;
+  --star-color: lavender;
+}
+.stars {
+  --percent: calc(var(--rating) / 5 * 100%);
+  display: inline-block;
+  font-size: var(--star-size);
+  font-family: Times;
+  line-height: 0.5;
+}
+.stars::after {
+  content: '★★★★★';
+  letter-spacing: 3px;
+  background: linear-gradient(90deg,
+    var(--star-background)
+    var(--percent),
+    var(--star-color)
+    var(--percent)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stars > p { font-size: initial; }
