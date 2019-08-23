@@ -10,11 +10,19 @@ html {
   overflow-y: scroll;
 }
 
+body {
+  /*font-family: 'Open Sans Condensed', sans-serif;*/
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  padding: 0;
+  margin: 0;
+}
+
 button > label {
   cursor: pointer;
 }
 
-a:visited { color:blue; }
+a, a:visited { color: darkslateblue; }
 
 
 
@@ -71,16 +79,16 @@ a:visited { color:blue; }
 /* COMPONENTS */
 /* ========== */
 
-#page {
+.content {
   max-width: 1024px;
   margin: 0 auto;
+  display: flex;
 }
 
 
 /* Site Header */
 #site-header {
-  display: flex;
-  /* height: 50px; */
+  padding: 1em;
 }
 
 #site-logo {
@@ -102,7 +110,7 @@ a:visited { color:blue; }
   font-style: italic;
   color: darkslateblue;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
 }
 
 #site-name > small {
@@ -119,7 +127,7 @@ a:visited { color:blue; }
 #site-nav > nav {
   display: flex;
   flex-wrap: wrap;
-  /* margin: 0.2em 0.5em; */
+  margin: 0.2em 0.5em;
   align-items: center;
 }
 
@@ -128,6 +136,7 @@ a:visited { color:blue; }
   white-space: nowrap;
   padding: 0.3em 1em 0.4em;
   line-height: 1em;
+  text-decoration: none;
 }
 
 
@@ -137,11 +146,13 @@ main {
 }
 
 footer {
-  display: flex;
-  padding: 0.5em;
+  padding: 0.5em 1em;
   background: whitesmoke;
   margin-top: 1em;
-  align-items: center;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 
@@ -164,10 +175,9 @@ footer {
 }
 
 .btn {
-  color: blue;
-  border: 1px solid blue;
+  border: 1px solid;
   white-space: nowrap;
-  padding: 0.3em 1em 0.4em;
+  padding: 0.4em 1em;
   line-height: 1em;
   cursor: pointer;
   text-decoration: none;
@@ -175,6 +185,14 @@ footer {
 
 .btn-link {
   padding: 1px 0.3em;
+}
+
+a.btn-pager {
+  background: whitesmoke;
+  border: 1px solid gainsboro;
+  border-radius: 3px;
+  box-shadow: 1px 1px 1px;
+  padding: 0 0.5em;
 }
 
 
@@ -439,7 +457,7 @@ footer {
   --percent: calc(var(--rating) / 5 * 100%);
   display: inline-block;
   font-size: var(--star-size);
-  font-family: Times;
+  /* font-family: Times; */
   line-height: 0.5;
 }
 .stars::after {
@@ -454,4 +472,14 @@ footer {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.stars > p { font-size: initial; }
+.stars > p { font-size: 14px; }
+
+@media all and (max-width:1049px) {
+  .content { margin: 0 1em; }
+}
+
+@media all and (max-width: 767px) {
+  #site-name {
+   font-size: 1.1rem;
+  }
+}

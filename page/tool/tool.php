@@ -28,21 +28,13 @@ include $app->rootPath . '/header.php';
 ?>
 <div class="page tool-view">
   <style>
-    p { margin: 0.5em; line-height: 1em; }
-    h2 { margin: 0; }
-    h3 { margin: 1em 0 0; }
+    p { margin: 0.5em; line-height: 1.15em; }
+    h3 { margin: 2em 0 0; }
     .stars::after { padding-left: 0.1em; }
   </style>
 
-  <br>
 
-  <div class="list-header">
-    <h2><?=$tool->name?></h2>
-    <a class="btn pull-right" href="<?=$request->back?>"
-      onclick="App.goBack(event, this)" style="position:relative;top:-2px;margin-left:auto">
-      <i class="fa fa-arrow-left"></i> Back
-    </a>
-  </div>
+  <h2><?=$tool->name?></h2>
 
 
   <h3>Description</h3>
@@ -82,6 +74,12 @@ include $app->rootPath . '/header.php';
   <?php endforeach; ?>
 
   <br>
+  <br>
+
+  <a class="btn" href="<?=$request->back?>"
+    onclick="App.goBack(event, this)" style="position:relative;top:-2px;margin-left:auto">
+    <i class="fa fa-arrow-left"></i> Back
+  </a>
 
 </div>
 <?php

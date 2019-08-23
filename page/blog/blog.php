@@ -5,7 +5,7 @@ if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
 $page = new stdClass();
-$page->title = 'About Us';
+$page->title = 'Blog';
 
 
 $message = array_get($app->state, 'message', null);
@@ -15,9 +15,9 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="about-page">
+<div class="blog-page">
 
-  <h2>About TOOL ORACLE</h2>
+  <h2>TOOL ORACLE Blog</h2>
 
   <?php if ($message):?>
   <h1><?=$message?></h1>

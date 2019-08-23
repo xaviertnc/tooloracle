@@ -37,7 +37,7 @@ class View {
   public function pagerLink($baseUri, $page, $icon, $disabled = false)
   {
     $href= "$baseUri?page=$page";
-    return '<a class="btn btn-link' . ($disabled ? ' disabled' : '') . '" ' .
+    return '<a class="btn-pager' . ($disabled ? ' disabled' : '') . '" ' .
      'href="' . $href . '"><i class="fa fa-' . $icon . '" aria-hidden="true"></i></a>';
   }
 

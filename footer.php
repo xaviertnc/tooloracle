@@ -1,7 +1,9 @@
-    </main>
-    <footer>
+  </main>
+  <br>
+  <footer>
+  	<div class="content">
       <span>&copy; TOOL ORACLE <?= date('Y') ?></span>
-    </footer>
-  </div>
+    </div>
+  </footer>
 </body>
 </html>

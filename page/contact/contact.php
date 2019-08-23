@@ -30,7 +30,7 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="page about">
+<div class="contact-page">
 
   <h2>Contact TOOL ORACLE</h2>
 

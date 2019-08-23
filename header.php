@@ -6,6 +6,7 @@
   <title><?=$page->title?> - Tool Oracle</title>
   <base href="<?=$request->urlBase?>/">
   <link href="img/favicon.png" rel="shortcut icon">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Open+Sans+Condensed:300&display=swap" rel="stylesheet">
   <link href="css/font-awesome.min.css" rel="stylesheet">
   <link href="css/pure-select.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
@@ -26,8 +27,8 @@
 </head>
 <body>
   <noscript>This page will not display correctly without Javascript enabled.</noscript>
-  <div id="page">
-    <header id="site-header">
+  <header id="site-header">
+    <div class="content">
       <a id="brand" href="<?=$request->urlBase?>">
         <img id="site-logo" src="img/logo.png" alt="Site Logo">
         <h1 id="site-name">Tool Oracle
@@ -37,7 +38,8 @@
         <nav id="main-nav">
           <a href="home">Home</a>
           <a href="about">About</a>
-          <a href="contact">Contact Us</a>
+          <a href="contact">Contact</a>
+          <a href="blog">Blog</a>
         </nav>
         <nav id="user-nav">
           <?php if ($auth->loggedIn): ?>
@@ -50,5 +52,6 @@
           <?php endif; ?>
         </nav>
       </div>
-    </header>
-    <main>
+    </div>
+  </header>
+  <main class="content">

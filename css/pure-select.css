@@ -13,7 +13,7 @@
   color: #363b3e;
   cursor: pointer;
   display: flex;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
   justify-content: left;
   min-height: 44px;
@@ -57,7 +57,7 @@
   display: none;
 }
 .select-pure__selected-label {
-  background: #5e6264;
+  background: darkslateblue;
   border-radius: 4px;
   color: #fff;
   cursor: initial;

@@ -19,7 +19,7 @@ unset($app->state['message']);
 
 // PAGINATION
 $pagination = new stdClass();
-$pagination->itemsPerPage = 10;
+$pagination->itemsPerPage = 15;
 $pagination->baseUri = '';
 $pagination->page = array_get($_GET, 'page', 1);
 $pagination->totalItems = DB::query('tools')->count();
@@ -35,9 +35,18 @@ $categories = DB::select('tool_categories');
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="page home">
+<div class="home-page">
 
   <h2>Welcome to TOOL ORACLE</h2>
+  <p>
+    Tool Oracle is here to help you choose the <b>most affordable and efficient
+    combination of online tools</b> that check all your boxes.
+  </p>
+  <p>
+    We don't just suggest perfect combinations, but we also provide helpful
+    articles, how-to guides, Q&A's and interactive support on most of the tools
+    and services listed here.
+  </p>
 
   <?php if ($message):?>
   <h1><?=$message?></h1>
