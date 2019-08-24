@@ -10,13 +10,15 @@
   <link href="css/font-awesome.min.css" rel="stylesheet">
   <link href="css/pure-select.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
+<!--
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!--   <script>
+  <script>
     (adsbygoogle = window.adsbygoogle || []).push({
       google_ad_client: "ca-pub-4708631205118863",
       enable_page_level_ads: true
     });
-  </script> -->
+  </script>
+-->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-146283830-1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -47,9 +49,9 @@
             <button type="submit" class="btn login" name="logout">Logout</button>
           </form>
           <a href="admin">Admin</a>
-          <?php else:?>
+<?php else:?>
           <a href="login" class="btn login">Login</a>
-          <?php endif; ?>
+<?php endif; ?>
         </nav>
       </div>
     </div>
