@@ -48,10 +48,10 @@ class View {
     $pages = $pagination->pages;
     $uri = $pagination->baseUri;
     return $this->pagerLink($uri, 1, 'fast-backward', $page <= 1) . '&nbsp;' . PHP_EOL .
-      '        ' . $this->pagerLink($uri, $page > 1 ? $page - 1 : $page, 'backward', $page <= 1) . '&nbsp;&nbsp;' . PHP_EOL .
-      '        Page:&nbsp;<input type="text" value="'. $page .'" name="page">&nbsp;of&nbsp;' . $pages . '&nbsp;' . PHP_EOL .
-      '        ' . $this->pagerLink($uri, $page < $pages ? $page + 1 : $page, 'forward', $page >= $pages) . '&nbsp;' . PHP_EOL .
-      '        ' . $this->pagerLink($uri, $pages, 'fast-forward', $page >= $pages) . PHP_EOL;
+      '      ' . $this->pagerLink($uri, $page > 1 ? $page - 1 : $page, 'backward', $page <= 1) . '&nbsp;&nbsp;' . PHP_EOL .
+      '      Page:&nbsp;<input type="text" value="'. $page .'" name="page">&nbsp;of&nbsp;' . $pages . '&nbsp;' . PHP_EOL .
+      '      ' . $this->pagerLink($uri, $page < $pages ? $page + 1 : $page, 'forward', $page >= $pages) . '&nbsp;' . PHP_EOL .
+      '      ' . $this->pagerLink($uri, $pages, 'fast-forward', $page >= $pages) . PHP_EOL;
   }
 
 }

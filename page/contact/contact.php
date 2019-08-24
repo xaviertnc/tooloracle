@@ -4,21 +4,6 @@
 if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
-if (isset($_GET['ajax']))
-{
-  switch($_GET['ajax'])
-  {
-    default:
-      $data = ['error' => 'Oops, something went wrong!'];
-  }
-  header('Content-type: application/json');
-  header('Cache-Control: no-cache, must-revalidate');
-  header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-  echo json_encode($data);
-  exit();
-}
-
-
 $page = new stdClass();
 $page->title = 'Contact Us';
 
@@ -32,39 +17,41 @@ include $app->rootPath . '/header.php';
 ?>
 <div class="contact-page">
 
-  <h2>Contact TOOL ORACLE</h2>
-
-  <?php if ($message):?>
-  <h1><?=$message?></h1>
-  <?php endif; ?>
+  <h2>Contact Us</h2>
 
   <section>
-    Content goes here...
+    <br>
+    <form method="POST">
+
+      <div class="field">
+        <label>Name:</label>
+        <input type="text" name="username" autofocus required>
+      </div>
+
+      <div class="field">
+        <label>Email:</label>
+        <input type="email" name="email" required>
+      </div>
+
+      <div class="field">
+        <label>Subject:</label>
+        <input type="text" name="subject" placeholder="The short version..." required>
+      </div>
+
+      <div class="field">
+        <label>Message:</label>
+        <textarea name="message" rows="5"></textarea>
+      </div>
+
+      <?php if ($message) echo "<b class=\"red\">$message</b>"; ?>
+
+      <div class="actionbar">
+        <input type="submit" value="Submit" name="login">
+      </div>
+
+    </form>
+    <br>
   </section>
-
-  <script>
-    window.App = {
-
-      get: function(url, onSuccess) {
-        var oReq = new XMLHttpRequest();
-        oReq.onload = function reqListener() {
-          var data = JSON.parse(this.responseText);
-          console.log(data);
-          onSuccess(data);
-        }
-        oReq.onerror = function reqError(err) {
-          console.log('Fetch Error :-S', err);
-        };
-        oReq.open('get', url, true);
-        oReq.send();
-      },
-
-      goto: function(url) {
-        window.location.href = url;
-      }
-    };
-
-  </script>
 
 </div>
 <?php

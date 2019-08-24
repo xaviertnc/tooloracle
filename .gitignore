@@ -1,5 +1,6 @@
 *sublime*
 .env-local
+.htaccess
 app/storage
 adminer
 bkp

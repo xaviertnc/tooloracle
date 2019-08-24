@@ -49,32 +49,33 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="page login">
-
+<div class="login-page">
   <br>
-
   <form method="POST">
+
     <fieldset style="padding:1em 2em 2em">
+
       <legend>Tool Oracle Admin</legend>
+
       <div class="field">
         <label>Username:</label>
         <input type="text" name="username" autofocus required>
       </div>
+
       <div class="field">
         <label>Password:</label>
         <input type="password" name="password" required>
       </div>
-      <?php if ($message):?>
-      <h4 class="red"><?=$message?></h4>
-      <?php endif; ?>
+      <?php if ($message) echo "<b class=\"red\">$message</b>"; ?>
+
       <div class="actionbar">
         <input type="submit" value="Login" name="login">
       </div>
+
     </fieldset>
+
   </form>
-
   <br>
-
 </div>
 <?php
 

@@ -18,13 +18,40 @@ include $app->rootPath . '/header.php';
 <div class="blog-page">
 
   <h2>TOOL ORACLE Blog</h2>
-
-  <?php if ($message):?>
-  <h1><?=$message?></h1>
-  <?php endif; ?>
+  <?php if ($message) echo "<b>$message</b>"; ?>
 
   <section>
-    Content goes here...
+  	<article>
+  		<h2>Article #1 Title</h2>
+  		<span>Author:</span>
+  		<span>Date:</span>
+  		<span>Tags:</span>
+  		<div>Content...</div>
+  	</article>
+		<hr>
+  	<article>
+  		<h2>Article #2 Title</h2>
+  		<span>Author:</span>
+  		<span>Date:</span>
+  		<span>Tags:</span>
+  		<div>Content...</div>
+  	</article>
+		<hr>
+  	<article>
+  		<h2>Article #3 Title</h2>
+  		<span>Author:</span>
+  		<span>Date:</span>
+  		<span>Tags:</span>
+  		<div>Content...</div>
+  	</article>
+		<hr>
+  	<article>
+  		<h2>Article #4 Title</h2>
+  		<span>Author:</span>
+  		<span>Date:</span>
+  		<span>Tags:</span>
+  		<div>Content...</div>
+  	</article>
   </section>
 
 </div>
