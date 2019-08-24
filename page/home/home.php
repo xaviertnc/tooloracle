@@ -67,17 +67,16 @@ include $app->rootPath . '/header.php';
       I'm doing research and need to find the latest and greatest Marketing tools on the Internet today.
     </li>
   </ul>
+  <?php if ($message) echo "<b>$message</b>"; ?>
 
-  <?php if ($message):?>
-  <b><?=$message?></b>
-  <?php endif; ?>
+  <section class="list-header" style="margin-top:3em">
+    <span style="margin-left:auto;display:flex;align-items:center">
+      <?=$view->paginationLinks($pagination)?>
+    </span>
+  </section>
 
-  <section style="margin-top:3em">
-    <div class="list-header">
-      <span style="margin-left:auto;display:flex;align-items:center">
-        <?=$view->paginationLinks($pagination)?>
-      </span>
-    </div>
+  <section class="list">
+
     <div class="list-item">
       <div style="flex:0.5;"><b>#</b></div>
       <div style="flex:2;"><b>Tool Name</b></div>
@@ -107,14 +106,12 @@ include $app->rootPath . '/header.php';
 
     <div class="list-item">Nothing to display...</div>
     <?php endif; ?>
+
   </section>
 
   <section class="list-footer actionbar">
-    <small>
-      Showing <?=$pagination->offset + 1?> -
-      <?=min($pagination->totalItems, $pagination->offset + $pagination->itemsPerPage)?> of
-      <?=$pagination->totalItems?>
-    </small>
+    <small>Showing <?=$pagination->offset + 1?> - <?=min($pagination->totalItems,
+      $pagination->offset + $pagination->itemsPerPage)?> of <?=$pagination->totalItems?></small>
     <span style="margin-left:auto;display:flex;align-items:center">
       <?=$view->paginationLinks($pagination)?>
     </span>
