@@ -39,20 +39,40 @@ include $app->rootPath . '/header.php';
 
   <h2>Welcome to TOOL ORACLE</h2>
   <p>
-    Tool Oracle is here to help you choose the <b>most affordable and efficient
-    combination of online tools</b> that check all your boxes.
+    Tool Oracle is here to help you choose the <b>most affordable combination of
+    online marketing and productivity tools</b> that check all your boxes.
   </p>
   <p>
-    We don't just suggest perfect combinations, but we also provide helpful
-    articles, how-to guides, Q&A's and interactive support on most of the tools
-    and services listed here.
+    We also provide helpful articles, how-to guides, Q&A's and interactive support on all of
+    the tools and services listed.
   </p>
 
+  <h3 style="margin-top:1.5em">Why are you here?</h3>
+  <ul>
+    <li>
+      I want to send email to all my contacts, but I have no idea where to start.
+    </li>
+    <li>
+      I have a huge list of contacts (200,000+). What are my options?
+    </li>
+    <li>
+      I just signed up at Mailchimp, Infusionsoft, Clickfunnels, ActiveCampaign...<br>
+      I need to get my campaign running ASAP, but it's so complicated!
+      Can you help me to get started please?
+    </li>
+    <li>I'm a freelancer and my client uses a tool or service I haven't used before.
+      Quick, get me up to speed!
+    </li>
+    <li>
+      I'm doing research and need to find the latest and greatest Marketing tools on the Internet today.
+    </li>
+  </ul>
+
   <?php if ($message):?>
-  <h1><?=$message?></h1>
+  <b><?=$message?></b>
   <?php endif; ?>
 
-  <section>
+  <section style="margin-top:3em">
     <div class="list-header">
       <span style="margin-left:auto;display:flex;align-items:center">
         <?=$view->paginationLinks($pagination)?>
