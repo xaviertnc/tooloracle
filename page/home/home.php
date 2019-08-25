@@ -56,21 +56,34 @@ include $app->rootPath . '/header.php';
       I have a huge list of contacts (200,000+). What are my options?
     </li>
     <li>
-      I just signed up at Mailchimp, Infusionsoft, Clickfunnels, ActiveCampaign...<br>
-      I need to get my campaign running ASAP, but it's so complicated!
-      Can you help me to get started please?
+      I signed up at Mailchimp, Infusionsoft, Clickfunnels, ActiveCampaign...<br>
+      and need my campaign up and running ASAP, but it's so complicated!
     </li>
-    <li>I'm a freelancer and my client uses a tool or service I haven't used before.
-      Quick, get me up to speed!
-    </li>
-    <li>
-      I'm doing research and need to find the latest and greatest Marketing tools on the Internet today.
-    </li>
+    <li>I'm a freelancer and my client uses a tool or service I haven't heard of before.</li>
   </ul>
   <?php if ($message) echo "<b>$message</b>"; ?>
 
   <section class="list-header" style="margin-top:3em">
-    <span style="margin-left:auto;display:flex;align-items:center">
+    <div class="input-group">
+      <label>Show:&nbsp;</label>
+      <select name="ipp">
+        <option value="7">7</option>
+        <option value="15" selected>15</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    <div class="input-group search">
+      <label>Name / Description:&nbsp;</label>
+      <span class="input-wrapper">
+        <input type="text" name="name_term">
+        <button class="add-after" name="search">
+          <i class="fa fa-search"></i>
+        </button>
+      </span>
+    </div>
+    <span class="pager">
       <?=$view->paginationLinks($pagination)?>
     </span>
   </section>

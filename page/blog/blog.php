@@ -17,7 +17,7 @@ include $app->rootPath . '/header.php';
 ?>
 <div class="blog-page">
 
-  <h2>TOOL ORACLE Blog</h2>
+  <h2>Blog</h2>
   <?php if ($message) echo "<b>$message</b>"; ?>
 
   <section>

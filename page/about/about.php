@@ -17,7 +17,7 @@ include $app->rootPath . '/header.php';
 ?>
 <div class="about-page">
 
-  <h2>About TOOL ORACLE</h2>
+  <h2>About Us</h2>
 
   <?php if ($message):?>
   <h1><?=$message?></h1>

@@ -24,6 +24,8 @@ button > label {
 
 a, a:visited { color: darkslateblue; }
 
+input, select, textarea { padding: 3px 5px; }
+
 
 
 /* ======= */
@@ -376,6 +378,45 @@ a.btn-pager {
   display: block;
 }
 
+
+/* Pagers */
+.pager {
+  display: flex;
+  align-items: center
+}
+
+.pager input {
+  width: 3em;
+  text-align: center;
+}
+
+
+/* Inputs */
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper {
+  display: flex;
+  /* position: relative; */
+}
+
+.search input {
+  min-width: 90px;
+  text-align: left;
+}
+
+.add-after {
+  border: 1px solid grey;
+  border-left: 0;
+}
+
+button.add-after {
+  cursor: pointer;
+}
+
+
 /* List Items */
 .list-item {
   display: flex;
@@ -417,15 +458,11 @@ a.btn-pager {
 .list-header {
   display: flex;
   margin: 1.5em 0;
+  justify-content: space-between;
 }
 
 .list-header h3 {
   margin: 0;
-}
-
-.list-header input {
-  width: 3em;
-  text-align: center;
 }
 
 
