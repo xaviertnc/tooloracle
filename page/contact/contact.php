@@ -8,6 +8,14 @@ $page = new stdClass();
 $page->title = 'Contact Us';
 
 
+if ($request->method == 'POST') {
+  $app->state['message'] = 'Thank you for your message!';
+  $_SESSION[$app->id] = $app->state;
+  header('location:' . $request->back);
+  exit();
+}
+
+
 $message = array_get($app->state, 'message', null);
 unset($app->state['message']);
 
@@ -43,7 +51,7 @@ include $app->rootPath . '/header.php';
         <textarea name="message" rows="5"></textarea>
       </div>
 
-      <?php if ($message) echo "<b class=\"red\">$message</b>"; ?>
+      <?php if ($message) echo "<b class=\"green\">$message</b>"; ?>
 
       <div class="actionbar">
         <input type="submit" value="Submit" name="login">
