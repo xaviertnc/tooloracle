@@ -39,7 +39,7 @@ if ($request->method == 'POST')
 
 
 $page = new stdClass();
-$page->title = 'Login';
+$page->title = 'Subscribe';
 
 
 $message = array_get($app->state, 'message', null);
@@ -49,13 +49,13 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="login">
+<div class="subscribe">
   <br>
   <form method="POST">
 
     <fieldset style="padding:1em 2em 2em">
 
-      <legend>Tool Oracle Admin</legend>
+      <legend>Subscribe</legend>
 
       <div class="field">
         <label>Username:</label>
@@ -65,6 +65,11 @@ include $app->rootPath . '/header.php';
       <div class="field">
         <label>Password:</label>
         <input type="password" name="password" required>
+      </div>
+
+      <div class="field">
+        <label>Repeat Password:</label>
+        <input type="password" name="password2" required>
       </div>
       <?php if ($message) echo "<b class=\"red\">$message</b>"; ?>
 

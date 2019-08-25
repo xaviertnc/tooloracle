@@ -91,6 +91,7 @@ input, select, textarea { padding: 3px 5px; }
 /* Site Header */
 #site-header {
   padding: 1em;
+  box-shadow: 0 0 7px 0px blanchedalmond;
 }
 
 #site-logo {
@@ -124,6 +125,8 @@ input, select, textarea { padding: 3px 5px; }
 /* Site Navigation */
 #site-nav {
   display: flex;
+  flex: auto;
+  justify-content: space-around;
 }
 
 #site-nav > nav {
@@ -134,12 +137,19 @@ input, select, textarea { padding: 3px 5px; }
 }
 
 #site-nav a {
+  border: 1px solid transparent;
   flex: 1;
   white-space: nowrap;
-  padding: 0.3em 1em 0.4em;
+  padding: 0.67em 1em;
   line-height: 1em;
   text-decoration: none;
 }
+
+#site-nav a:hover {
+  background-color: whitesmoke;
+  border-color: whitesmoke;
+}
+
 
 
 /* Site Content */
@@ -172,7 +182,7 @@ footer {
 
 
 /* Buttons */
-.btn:hover, nav a:hover {
+.btn:hover {
   background-color: whitesmoke;
 }
 
@@ -414,6 +424,38 @@ a.btn-pager {
 
 button.add-after {
   cursor: pointer;
+}
+
+
+#site-nav .btn-login {
+  border: 1px solid;
+  text-align: center;
+  margin: 0.5em 1em;
+  padding: 0.5em 1.5em 0.6em;
+}
+
+#site-nav .btn-login:hover {
+  border: 1px solid green;
+  background-color: white;
+  color: green;
+}
+
+.btn-cta {
+  background: orange;
+  border: 1px solid transparent;
+  color: white;
+  border-radius: 17px;
+  text-align: center;
+}
+
+.btn-cta:visited {
+  color: white;
+}
+
+#site-nav .btn-cta:hover {
+  background: yellowgreen;
+  border-color: yellowgreen;
+  color: white;
 }
 
 

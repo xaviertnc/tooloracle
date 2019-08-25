@@ -29,10 +29,11 @@
       </a>
       <div id="site-nav">
         <nav id="main-nav">
-          <a href="home">Home</a>
-          <a href="about">About</a>
-          <a href="contact">Contact</a>
+          <a href="howto">How To Guides</a>
+          <a href="answers">Q&amp;A's</a>
+          <a href="support">Support</a>
           <a href="blog">Blog</a>
+          <a href="contact">Contact</a>
         </nav>
         <nav id="user-nav">
           <?php if ($auth->loggedIn): ?>
@@ -43,8 +44,10 @@
           <a href="admin">Admin</a>
           <?php else:?>
 
-          <a href="login" class="btn login">Login</a>
+          <a href="login" class="btn btn-login">Login</a>
           <?php endif; ?>
+
+          <a href="subscribe" class="btn-cta">Subscribe</a>
 
         </nav>
       </div>
