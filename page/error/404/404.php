@@ -17,7 +17,7 @@
   }
 </style>
 <div class="error-container">
-  <div class="error server-error">
+  <div class="error server-error content">
     <h3>Oops, are you lost?</h3>
     <hr>
     <h4>The page you requested is not available.</h4>

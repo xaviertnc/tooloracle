@@ -35,47 +35,55 @@ $categories = DB::select('tool_categories');
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="home-page">
+<div class="home-page content">
 
   <h2>Welcome to TOOL ORACLE</h2>
+  <?php if ($message) echo "<b>$message</b>"; ?>
+
   <p>
     Tool Oracle is here to help you choose the <b>most affordable combination of
     online marketing and productivity tools</b> that check all your boxes.
   </p>
   <p>
-    We also provide helpful articles, how-to guides, Q&A's and interactive support on all of
+    We also provide helpful articles, how-to guides, Q&amp;A's and interactive support on all of
     the tools and services listed.
   </p>
 
-  <h3 style="margin-top:1.5em">Why are you here?</h3>
-  <ul>
-    <li>
-      I want to send email to all my contacts, but I have no idea where to start.
-    </li>
-    <li>
-      I have a huge list of contacts (200,000+). What are my options?
-    </li>
-    <li>
-      I signed up at Mailchimp, Infusionsoft, Clickfunnels, ActiveCampaign...<br>
-      and need my campaign up and running ASAP, but it's so complicated!
-    </li>
-    <li>I'm a freelancer and my client uses a tool or service I haven't heard of before.</li>
-  </ul>
-  <?php if ($message) echo "<b>$message</b>"; ?>
-
-  <section class="list-header" style="margin-top:3em">
-    <div class="input-group">
-      <label>Show:&nbsp;</label>
-      <select name="ipp">
-        <option value="7">7</option>
-        <option value="15" selected>15</option>
-        <option value="30">30</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-      </select>
+  <section class="row">
+    <div class="col" style="margin-right:1em">
+      <h3>Why are you here?</h3>
+      <ul class="checklist">
+        <li><label><input type="checkbox" name="reason[1]">I'm looking for the best tool or service for me.</label></li>
+        <li><label><input type="checkbox" name="reason[2]">I want to compare my current tool or services with similar solutions.</label></li>
+        <li><label><input type="checkbox" name="reason[3]">I want your honest, unbiased opinion on this tool. What are the pros and cons?</label></li>
+        <li><label><input type="checkbox" name="reason[4]">You guys always have the answers to my newby questions that I just can't find anywhere else!</label></li>
+        <li><label><input type="checkbox" name="reason[5]">I'm a freelancer and my client uses a tool or service I haven't heard of before.</label></li>
+        <li><label><input type="checkbox" name="reason[6]">I have a huge list of contacts (200,000+). What are my options?</label></li>
+        <li><label><input type="checkbox" name="reason[7]">Please help me get my email campaign running ASAP!</label></li>
+      </ul>
     </div>
+    <div class="col">
+      <h3>What are you looking for?</h3>
+      <div class="button-cloud">
+        <button>Email Marketing</button>
+        <button>Webinars</button>
+        <button>Funnel Builders</button>
+        <button>Scheduling</button>
+        <button>E-commerce</button>
+        <button>Data Analytics</button>
+        <button>Viral Campaigns</button>
+        <button>CRMs</button>
+        <button>All-in-one</button>
+        <button>Integrators</button>
+        <button>Landing Pages</button>
+        <button>Wordpress</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="list-filter">
     <div class="input-group search">
-      <label>Name / Description:&nbsp;</label>
+      <label>Search:&nbsp;</label>
       <span class="input-wrapper">
         <input type="text" name="name_term">
         <button class="add-after" name="search">
@@ -83,14 +91,11 @@ include $app->rootPath . '/header.php';
         </button>
       </span>
     </div>
-    <span class="pager">
-      <?=$view->paginationLinks($pagination)?>
-    </span>
   </section>
 
   <section class="list">
 
-    <div class="list-item">
+    <div class="list-item list-header">
       <div style="flex:0.5;"><b>#</b></div>
       <div style="flex:2;"><b>Tool Name</b></div>
       <div style="flex:1;text-align:center"><b>Free Version</b></div>
@@ -105,7 +110,7 @@ include $app->rootPath . '/header.php';
 
     <div class="list-item">
       <div style="flex:0.5;"><?=($pagination->offset + $index + 1) . '. '?></div>
-      <div style="flex:2;"><a href="tool?id=<?=$tool->id?>"><?=$tool->name?></a></div>
+      <div style="flex:2;"><a href="home/toolview?id=<?=$tool->id?>"><?=$tool->name?></a></div>
       <div style="flex:1;text-align:center"><?=$tool->free_version?$yes:$no?></div>
       <div style="flex:1;text-align:center"><?=$tool->free_trail?$yes:$no?></div>
       <div style="flex:1;text-align:center"><?=$tool->card_required?$yes:$no?></div>
@@ -122,10 +127,21 @@ include $app->rootPath . '/header.php';
 
   </section>
 
-  <section class="list-footer actionbar">
-    <small>Showing <?=$pagination->offset + 1?> - <?=min($pagination->totalItems,
-      $pagination->offset + $pagination->itemsPerPage)?> of <?=$pagination->totalItems?></small>
-    <span style="margin-left:auto;display:flex;align-items:center">
+  <section class="list-footer">
+    <span>Showing <?=$pagination->offset + 1?> - <?=min($pagination->totalItems,
+      $pagination->offset + $pagination->itemsPerPage)?> of <?=$pagination->totalItems?>
+    </span>
+    <div class="input-group">
+      <label>Show:&nbsp;</label>
+      <select name="ipp">
+        <option value="7">7</option>
+        <option value="15" selected>15</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    <span class="pager">
       <?=$view->paginationLinks($pagination)?>
     </span>
   </section>

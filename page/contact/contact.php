@@ -23,7 +23,7 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="contact-page">
+<div class="contact-page content">
 
   <h2>Contact Us</h2>
 

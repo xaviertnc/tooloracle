@@ -1,4 +1,4 @@
-<?php //pages/tool/tool.php
+<?php //pages/home/toolview.php
 
 
 if ( ! defined('__APP_START__')) die(); // Silence is golden
@@ -19,7 +19,7 @@ $plans = DB::select('plans WHERE tool_id=?', [$tool_id]);
 
 foreach($plans as $plan)
 {
-  $plan->metrics = DB::select('metrics WHERE plan_id=?', [$plan->id]);
+  $plan->metrics = DB::select('plan_metrics WHERE plan_id=?', [$plan->id]);
 }
 
 

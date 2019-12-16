@@ -14,7 +14,7 @@ if ($request->method == 'POST')
     if ($_POST['username'] == $auth->username and
         $_POST['password'] == $auth->password)
     {
-      $goto = 'admin';
+      $goto = 'admin/tools';
       $app->state['loggedIn'] = true;
     }
     else
@@ -49,11 +49,11 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="login">
+<div class="login content">
   <br>
-  <form method="POST">
+  <form method="POST" class="text-center">
 
-    <fieldset style="padding:1em 2em 2em">
+    <fieldset style="display:inline-block;padding:1em 2em 2em;text-align:left;">
 
       <legend>Tool Oracle Admin</legend>
 

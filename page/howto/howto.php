@@ -15,7 +15,7 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="howto">
+<div class="howto content">
 
   <h2>How To Guides</h2>
 

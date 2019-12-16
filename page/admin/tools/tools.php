@@ -1,4 +1,4 @@
-<?php //page/admin/admin.php
+<?php //page/admin/tools/tools.php
 
 
 if ( ! defined('__APP_START__')) die(); // Silence is golden
@@ -93,7 +93,7 @@ include $app->rootPath . '/header.php';
 ?>
 <div class="page home">
 
-  <h2>ADMIN</h2>
+  <h2>ADMIN Tools</h2>
 
   <?php if ($message):?>
   <h1><?=$message?></h1>
@@ -226,7 +226,7 @@ include $app->rootPath . '/header.php';
 
       fetchSubCategories: function(category_id) {
         console.log('Hi, fetching sub-categories!');
-        this.get('?ajax=getSubCategories&id=' + category_id, function(optionsData) {
+        this.get('admin/tools?ajax=getSubCategories&id=' + category_id, function(optionsData) {
           var options = [];
           var elSelect = document.getElementById('subcategories');
           var elNullOption = elSelect.firstElementChild;
@@ -255,7 +255,7 @@ include $app->rootPath . '/header.php';
       }
     }
 
-    App.get('?ajax=getFeatures', function(features) {
+    App.get('admin/tools?ajax=getFeatures', function(features) {
       // console.log('Ajax Resp - Features =', features);
       App.featuresSelect = new TagSelect('#features-select', {
         options: features,

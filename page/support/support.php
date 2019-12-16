@@ -15,7 +15,7 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="support">
+<div class="support content">
 
   <h2>Support</h2>
 

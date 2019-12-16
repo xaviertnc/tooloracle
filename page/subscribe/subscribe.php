@@ -14,7 +14,7 @@ if ($request->method == 'POST')
     if ($_POST['username'] == $auth->username and
         $_POST['password'] == $auth->password)
     {
-      $goto = 'admin';
+      $goto = 'admin/tools';
       $app->state['loggedIn'] = true;
     }
     else
@@ -49,13 +49,13 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="subscribe">
+<div class="subscribe content">
   <br>
-  <form method="POST">
+  <form method="POST" class="text-center">
 
-    <fieldset style="padding:1em 2em 2em">
+    <fieldset style="display:inline-block;padding:1em 2em 2em;text-align:left;">
 
-      <legend>Subscribe</legend>
+      <legend>Tool Oracle Subscribe</legend>
 
       <div class="field">
         <label>Username:</label>
@@ -74,7 +74,7 @@ include $app->rootPath . '/header.php';
       <?php if ($message) echo "<b class=\"red\">$message</b>"; ?>
 
       <div class="actionbar">
-        <input type="submit" value="Login" name="login">
+        <input type="submit" value="Subscribe" name="login">
       </div>
 
     </fieldset>

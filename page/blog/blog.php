@@ -15,7 +15,7 @@ unset($app->state['message']);
 include $app->rootPath . '/header.php';
 
 ?>
-<div class="blog-page">
+<div class="blog-page content">
 
   <h2>Blog</h2>
   <?php if ($message) echo "<b>$message</b>"; ?>
