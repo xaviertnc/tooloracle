@@ -7,13 +7,13 @@
  *
  * Licensed under the MIT license. Please see LICENSE for more information.
  *
- * @update C. Moller - 9 June 2014: Added session domain support
+ * @update C. Moller - 9 June 2014: Added session scope support
  *
  */
 class Session
 {
 
-	protected $domain;
+	protected $scope;
 
 
 	public function id($id = null)
@@ -37,9 +37,9 @@ class Session
 	}
 
 
-	public function start($domain = null, $id = null)
+	public function start($scope = null, $id = null)
 	{
-		$this->domain = $domain;
+		$this->scope = $scope;
 
 		$started = $this->started();
 
@@ -60,31 +60,31 @@ class Session
 			session_start();
 		}
 
-		//NB: You can't and shouldn't use session->has($domain) or session->put($domain)
-		//    to detect or set the $domain array!
-    if ($domain and empty($_SESSION[$domain]))
+		//NB: You can't and shouldn't use session->has($scope) or session->put($scope)
+		//    to detect or set the $scope array!
+    if ($scope and empty($_SESSION[$scope]))
     {
-      $_SESSION[$domain] = array();
+      $_SESSION[$scope] = array();
     }
 
 	}
 
 
-  public function get_domain()
+  public function getScope()
   {
-    return $this->domain;
+    return $this->scope;
   }
 
 
-  public function change_domain($new_domain)
+  public function changeScope($newScope)
   {
-    $this->domain = $new_domain;
+    $this->scope = $newScope;
   }
 
 
 	public function has($key)
 	{
-		return $this->domain ? isset($_SESSION[$this->domain][$key]) : isset($_SESSION[$key]);
+		return $this->scope ? isset($_SESSION[$this->scope][$key]) : isset($_SESSION[$key]);
 	}
 
 
@@ -100,12 +100,12 @@ class Session
 	{
 		if (is_null($key))
 		{
-			return $this->domain ? $_SESSION[$this->domain] : $_SESSION;
+			return $this->scope ? $_SESSION[$this->scope] : $_SESSION;
 		}
 
 		if ($this->has($key))
 		{
-			return $this->domain ? $_SESSION[$this->domain][$key] : $_SESSION[$key];
+			return $this->scope ? $_SESSION[$this->scope][$key] : $_SESSION[$key];
 		}
 		else
 		{
@@ -122,9 +122,9 @@ class Session
 
 	public function put($key, $value)
 	{
-		if ($this->domain)
+		if ($this->scope)
 		{
-			$_SESSION[$this->domain][$key] = $value;
+			$_SESSION[$this->scope][$key] = $value;
 		}
 		else
 		{
@@ -135,9 +135,9 @@ class Session
 
 	public function flash($key, $value)
 	{
-		if ($this->domain)
+		if ($this->scope)
 		{
-			$_SESSION[$this->domain]['__FLASH__'][$key] = $value;
+			$_SESSION[$this->scope]['__FLASH__'][$key] = $value;
 		}
 		else
 		{
@@ -148,9 +148,9 @@ class Session
 
 	public function forget($key)
 	{
-		if ($this->domain)
+		if ($this->scope)
 		{
-			unset($_SESSION[$this->domain][$key]);
+			unset($_SESSION[$this->scope][$key]);
 		}
 		else
 		{
@@ -170,14 +170,14 @@ class Session
 		if ($destory_current)
 		{
 			$this->destroy();
-			$this->start($this->domain);
+			$this->start($this->scope);
 		}
 		else
 		{
-			if ($this->domain)
+			if ($this->scope)
 			{
-				//NB: Don't use session->put() to set the $domain array!
-				$_SESSION[$this->domain] = array();
+				//NB: Don't use session->put() to set the $scope array!
+				$_SESSION[$this->scope] = array();
 			}
 			else
 			{
@@ -187,7 +187,7 @@ class Session
 	}
 
 
-	public function change_id($delete_old_session = false)
+	public function changeId($delete_old_session = false)
 	{
 		session_regenerate_id($delete_old_session);
 	}
@@ -195,10 +195,10 @@ class Session
 
 	public function replace(array $new_session_array)
 	{
-		if ($this->domain)
+		if ($this->scope)
 		{
-			//NB: Don't use session->put() to set the $domain array!
-			$_SESSION[$this->domain] = $new_session_array;
+			//NB: Don't use session->put() to set the $scope array!
+			$_SESSION[$this->scope] = $new_session_array;
 		}
 		else
 		{
