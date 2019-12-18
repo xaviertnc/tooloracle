@@ -19,33 +19,64 @@ register_shutdown_function(function() {
 });
 
 
-session_start();
-
-
 // GLOBALS
-$log     = new stdClass();
-$app     = new stdClass();
-$auth    = new stdClass();
-$request = new stdClass();
+$app       = new stdClass();
+$auth      = new stdClass();
+$request   = new stdClass();
 
 
+// APP ID
+$app->id = 'tooloracle';
+
+
+// APP STATE
+session_start();
+$app->state = array_get( $_SESSION, $app->id, [] );
+
+
+// APP LOCAL ENVIRONMENT
 require '.env-local';
 
 
+// HTTP REQUEST
+$request->uri        = array_get( $_SERVER, 'REQUEST_URI'    );
+$request->method     = array_get( $_SERVER, 'REQUEST_METHOD' );
+$request->back       = array_get( $_SERVER, 'HTTP_REFERER'   );
+$request->parts      = explode  ( '?',       $request->uri   );
+$request->pageRef    = trim(str_replace($env->siteUrl, '', $request->parts[0]), '/');
+$request->query      = isset($request->parts[1]) ? $request->parts[1] : '';
+$request->pageRef    = $request->pageRef?:$app->env->homeUri;
+$request->parts      = explode('/', $request->pageRef);
+$request->partsCount = $request->parts ? count($request->parts) : 0;
+$request->lastPart   = $request->parts[$request->partsCount - 1];
+$request->itemId     = (int) $request->lastPart;
+if ( $request->itemId > 0 ) {
+	$request->partsCount--;
+	array_pop($request->parts);
+	$request->pageRef  = implode($request->parts, '/');
+  $request->lastPart = $request->parts[$request->partsCount - 1];
+} else {
+	$request->itemId = null;
+}
+
+
+// AUTH STATUS
+$auth->loggedIn = array_get( $app->state, 'loggedIn', false );
+
+
 // APP SERVICES
-require $app->servicesPath . '/Logger.php';
-require $app->servicesPath . '/Database.php';
-require $app->servicesPath . '/Format.php';
-require $app->servicesPath . '/View.php';
+require $app->env->servicesPath . '/Logger.php';
+require $app->env->servicesPath . '/Database.php';
+require $app->env->servicesPath . '/Format.php';
+require $app->env->servicesPath . '/View.php';
 
 
 // GET PAGE CONTROLLER
-$app->currentPage = $request->parts[count($request->parts)-1];
-$app->controllerPath = $app->pagesPath . '/' . $request->pageRef;
+$app->currentPage = $request->lastPart;
+$app->controllerPath = $app->env->pagesPath . '/' . $request->pageRef;
 $app->controller = $app->controllerPath . '/' . $app->currentPage . '.php';
-
 if ( ! file_exists($app->controller)) {
-  $app->controllerPath = $app->pagesPath . '/error/404';
+  $app->controllerPath = $app->env->pagesPath . '/error/404';
   $app->controller = $app->controllerPath . '/404.php';
 }
 

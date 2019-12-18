@@ -4,7 +4,7 @@
 if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
-DB::connect($app->dbConnection);
+DB::connect($app->env->dbConnection);
 
 
 // PAGE
@@ -32,7 +32,7 @@ $tools = DB::query('tools')->limit($pagination->offset, $pagination->itemsPerPag
 $categories = DB::select('tool_categories');
 
 
-include $app->rootPath . '/header.php';
+include $app->env->rootPath . '/header.php';
 
 ?>
 <div class="home-page content">
@@ -149,7 +149,7 @@ include $app->rootPath . '/header.php';
 </div>
 <?php
 
-include $app->rootPath . '/footer.php';
+include $app->env->rootPath . '/footer.php';
 
 
 $_SESSION[$app->id] = $app->state;

@@ -21,6 +21,6 @@
     <h3>Oops, are you lost?</h3>
     <hr>
     <h4>The page you requested is not available.</h4>
-    <h5>Click here to goto: <a class="pagelink" href="<?=$request->urlBase?>">Home Page</a></h5>
+    <h5>Click here to goto: <a class="pagelink" href="<?=$app->env->siteUrl?>">Home Page</a></h5>
   </div>
 </div>

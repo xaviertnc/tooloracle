@@ -12,7 +12,7 @@ $message = array_get($app->state, 'message', null);
 unset($app->state['message']);
 
 
-include $app->rootPath . '/header.php';
+include $app->env->rootPath . '/header.php';
 
 ?>
 <div class="howto content">
@@ -20,13 +20,14 @@ include $app->rootPath . '/header.php';
   <h2>How To Guides</h2>
 
   <section>
+  	ItemId = <?=$request->itemId?><br>
     Content goes here...
   </section>
 
 </div>
 <?php
 
-include $app->rootPath . '/footer.php';
+include $app->env->rootPath . '/footer.php';
 
 
 $_SESSION[$app->id] = $app->state;

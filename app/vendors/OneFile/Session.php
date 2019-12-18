@@ -12,7 +12,7 @@
  */
 class Session
 {
-  
+
 	protected $domain;
 
 
@@ -68,14 +68,14 @@ class Session
     }
 
 	}
-  
-  
+
+
   public function get_domain()
   {
     return $this->domain;
-  }  
+  }
 
-  
+
   public function change_domain($new_domain)
   {
     $this->domain = $new_domain;
@@ -87,7 +87,7 @@ class Session
 		return $this->domain ? isset($_SESSION[$this->domain][$key]) : isset($_SESSION[$key]);
 	}
 
-  
+
 	/**
 	 * This method adds the convenience of not having to check if a key exists before retrieving
 	 * and also returns a default value if not set!
@@ -113,13 +113,13 @@ class Session
 		}
 	}
 
-  
+
 	public function all()
 	{
 		return $this->get();
 	}
 
-  
+
 	public function put($key, $value)
 	{
 		if ($this->domain)
@@ -131,8 +131,8 @@ class Session
 			$_SESSION[$key] = $value;
 		}
 	}
-  
-  
+
+
 	public function flash($key, $value)
 	{
 		if ($this->domain)
@@ -145,7 +145,7 @@ class Session
 		}
 	}
 
-  
+
 	public function forget($key)
 	{
 		if ($this->domain)
@@ -158,13 +158,13 @@ class Session
 		}
 	}
 
-  
+
 	public function destroy()
 	{
 		session_destroy();
 	}
 
-  
+
 	public function clear($destory_current = false)
 	{
 		if ($destory_current)
@@ -186,13 +186,13 @@ class Session
 		}
 	}
 
-  
+
 	public function change_id($delete_old_session = false)
 	{
 		session_regenerate_id($delete_old_session);
 	}
 
-  
+
 	public function replace(array $new_session_array)
 	{
 		if ($this->domain)

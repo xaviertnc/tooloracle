@@ -11,8 +11,8 @@ if ($request->method == 'POST')
 
   if (isset($_POST['login']))
   {
-    if ($_POST['username'] == $auth->username and
-        $_POST['password'] == $auth->password)
+    if ($_POST['username'] == $app->env->auth->username and
+        $_POST['password'] == $app->env->auth->password)
     {
       $goto = 'admin/tools';
       $app->state['loggedIn'] = true;
@@ -46,7 +46,7 @@ $message = array_get($app->state, 'message', null);
 unset($app->state['message']);
 
 
-include $app->rootPath . '/header.php';
+include $app->env->rootPath . '/header.php';
 
 ?>
 <div class="login content">
@@ -79,7 +79,7 @@ include $app->rootPath . '/header.php';
 </div>
 <?php
 
-include $app->rootPath . '/footer.php';
+include $app->env->rootPath . '/footer.php';
 
 
 $_SESSION[$app->id] = $app->state;

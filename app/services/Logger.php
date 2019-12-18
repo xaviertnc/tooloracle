@@ -1,5 +1,5 @@
 <?php
 
-require $app->vendorsPath . '/OneFile/Logger.php';
+require $app->env->vendorsPath . '/OneFile/Logger.php';
 
-$log = new \OneFile\Logger($app->storagePath . '/logs');
+$log = new \OneFile\Logger($app->env->storagePath . '/logs');

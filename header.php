@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?=$page->title?> - Tool Oracle</title>
-  <base href="<?=$request->urlBase?>/">
+  <base href="<?=$app->env->siteUrl?>/">
   <link href="img/favicon.png" rel="shortcut icon">
   <link href="https://fonts.googleapis.com/css?family=Open+Sans|Open+Sans+Condensed:300&display=swap" rel="stylesheet">
   <link href="css/font-awesome.min.css" rel="stylesheet">
@@ -22,7 +22,7 @@
 <noscript>This page will not display correctly without Javascript enabled.</noscript>
 <header id="site-header">
   <div class="content">
-    <a id="brand" href="<?=$request->urlBase?>">
+    <a id="brand" href="<?=$app->env->siteUrl?>">
       <img id="site-logo" src="img/logo.png" alt="Site Logo">
       <?php if ( ! $auth->loggedIn): ?>
 

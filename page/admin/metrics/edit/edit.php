@@ -10,7 +10,7 @@ if ( ! $auth->loggedIn) { header('location:login'); }
 $metric_id = array_get($_GET, 'id', 0);
 
 
-DB::connect($app->dbConnection);
+DB::connect($app->env->dbConnection);
 
 
 function cleanDecimals(&$data, array $keys) {
@@ -71,7 +71,7 @@ $message = array_get($app->state, 'message', null);
 unset($app->state['message']);
 
 
-include $app->rootPath . '/header.php';
+include $app->env->rootPath . '/header.php';
 
 ?>
 <div class="page plan-edit">
@@ -217,7 +217,7 @@ include $app->rootPath . '/header.php';
 </div>
 <?php
 
-include $app->rootPath . '/footer.php';
+include $app->env->rootPath . '/footer.php';
 
 
 $_SESSION[$app->id] = $app->state;

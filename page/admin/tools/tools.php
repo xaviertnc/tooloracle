@@ -7,7 +7,7 @@ if ( ! defined('__APP_START__')) die(); // Silence is golden
 if ( ! $auth->loggedIn) { header('location:login'); }
 
 
-DB::connect($app->dbConnection);
+DB::connect($app->env->dbConnection);
 
 
 if ($request->method == 'POST') {
@@ -76,7 +76,7 @@ unset($app->state['message']);
 // PAGINATION
 $pagination = new stdClass();
 $pagination->itemsPerPage = 10;
-$pagination->baseUri = 'admin';
+$pagination->baseUri = 'admin/tools';
 $pagination->page = array_get($_GET, 'page', 1);
 $pagination->totalItems = DB::query('tools')->count();
 $pagination->offset = ($pagination->page - 1) * $pagination->itemsPerPage;
@@ -88,7 +88,7 @@ $tools = DB::query('tools')->limit($pagination->offset, $pagination->itemsPerPag
 $categories = DB::select('tool_categories');
 
 
-include $app->rootPath . '/header.php';
+include $app->env->rootPath . '/header.php';
 
 ?>
 <div class="page home">
@@ -163,12 +163,12 @@ include $app->rootPath . '/header.php';
 
     <div class="list-item">
       <div class="col1" style="min-width:40px;"><?=($pagination->offset + $index + 1) . '. '?></div>
-      <div class="col2"><a href="admin/tools/edit?id=<?=$tool->id?>"><?=$tool->name?></a></div>
+      <div class="col2"><a href="admin/tools/edit/<?=$tool->id?>"><?=$tool->name?></a></div>
       <div class="actions" style="margin-left:auto;display:flex;align-items:center">
         <a class="btn btn-link" href="<?=$tool->website?>" target="_blank">
           <i class="fa fa-globe blue" aria-hidden="true"></i>
         </a>
-        <a class="btn btn-link" href="admin/tools/edit?id=<?=$tool->id?>">
+        <a class="btn btn-link" href="admin/tools/edit/<?=$tool->id?>">
           <i class="fa fa-pencil" aria-hidden="true"></i>
         </a>
         <button type="button" class="btn-delete">
@@ -276,7 +276,7 @@ include $app->rootPath . '/header.php';
 </div>
 <?php
 
-include $app->rootPath . '/footer.php';
+include $app->env->rootPath . '/footer.php';
 
 
 $_SESSION[$app->id] = $app->state;

@@ -1,7 +1,7 @@
 <?php //NOTE:  NO NAMESPACE!  I.e. This class is in global scope and static.
 
-require $app->vendorsPath . '/Xap/Engine.php';
-require $app->vendorsPath . '/OneFile/DbQuery.php';
+require $app->env->vendorsPath . '/Xap/Engine.php';
+require $app->env->vendorsPath . '/OneFile/DbQuery.php';
 
 use Xap\Engine as Xap;
 use Xap\Pagination;
