@@ -11,8 +11,8 @@ if ($request->method == 'POST')
 
   if (isset($_POST['login']))
   {
-    if ($_POST['username'] == $app->env->auth->username and
-        $_POST['password'] == $app->env->auth->password)
+    if ($_POST['username'] === $app->env->auth->username and
+        $_POST['password'] === $app->env->auth->password)
     {
       $goto = 'admin/tools';
       $app->state['loggedIn'] = true;
