@@ -65,8 +65,8 @@ $auth->loggedIn = array_get( $app->state, 'loggedIn', false );
 
 
 // APP SERVICES
+require $app->env->vendorsPath  . '/OneFile/Database.php';
 require $app->env->servicesPath . '/Logger.php';
-require $app->env->servicesPath . '/Database.php';
 require $app->env->servicesPath . '/Format.php';
 require $app->env->servicesPath . '/View.php';
 

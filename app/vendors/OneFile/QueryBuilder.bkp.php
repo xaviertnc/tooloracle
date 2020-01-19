@@ -5,7 +5,7 @@ use Exception;
 
 /**
  *
- * DB Query Class
+ * Query Builder Class
  *
  * @author: C. Moller
  * @date: 24 Jan 2017
@@ -39,10 +39,10 @@ use Exception;
  *
  */
 
-class DbQuery
+class QueryBuilder
 {
 
-  public $executeQueryFn;
+  public $executeFn;
 
 
   public function __construct($executeQueryFn)

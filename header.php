@@ -21,8 +21,8 @@
 <body>
 <noscript>This page will not display correctly without Javascript enabled.</noscript>
 <header id="site-header">
-  <div class="content">
-    <a id="brand" href="<?=$app->env->siteUrl?>">
+  <div class="container container-fixed">
+    <a id="site-brand" href="<?=$app->env->siteUrl?>">
       <img id="site-logo" src="img/logo.png" alt="Site Logo">
       <?php if ( ! $auth->loggedIn): ?>
 
@@ -32,37 +32,40 @@
       <?php endif; ?>
 
     </a>
-    <button id="toggle-nav" type="button"
-      onclick="this.nextElementSibling.classList.toggle('open')">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-    <div id="site-nav">
-      <nav id="main-nav">
-        <a href="howto">How To Guides</a>
-        <a href="answers">Q&amp;A's</a>
-        <a href="support">Support</a>
-        <a href="blog">Blog</a>
-        <a href="contact">Contact</a>
-        <?php if ($auth->loggedIn): ?>
+    <div class="navbar">
+      <button class="nav-toggle" type="button"
+        onclick="this.nextElementSibling.classList.toggle('open')">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav>
+        <ul id="site-nav">
+          <li><a href="howto">How To Guides</a></li>
+          <li><a href="answers">Q&amp;A's</a></li>
+          <li><a href="support">Support</a></li>
+          <li><a href="blog">Blog</a></li>
+          <li><a href="contact">Contact</a></li>
+          <?php if ($auth->loggedIn): ?>
 
-        <a href="admin/tools">Admin</a>
-        <?php endif; ?>
+          <li><a href="admin/tools">Admin</a></li>
+          <?php endif; ?>
 
-      </nav>
-      <nav id="user-nav">
-        <a href="subscribe" class="btn-cta">Subscribe</a>
-        <?php if ($auth->loggedIn): ?>
+        </ul>
+        <ul id="auth-nav">
+          <?php if ($auth->loggedIn): ?>
+          <li>
+            <form action="login" method="POST">
+              <button type="submit" class="btn btn-logout" name="logout">Logout</button>
+            </form>
+          </li>
+          <?php else:?>
 
-        <form id="logout" action="login" method="POST">
-          <button type="submit" class="btn btn-logout" name="logout">Logout</button>
-        </form>
-        <?php else:?>
+          <li><a href="subscribe" class="btn-cta btn-subscribe">Subscribe</a></li>
+          <li><a href="login" class="btn btn-login">Login</a></li>
+          <?php endif; ?>
 
-        <a id="login" href="login" class="btn btn-login">Login</a>
-        <?php endif; ?>
-
+        </ul>
       </nav>
     </div>
   </div>

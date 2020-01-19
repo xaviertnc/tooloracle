@@ -4,7 +4,8 @@
 if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
-DB::connect($app->env->dbConnection);
+// DB::connect($app->env->dbConnection);
+$db = new OneFile\Database($app->env->dbConnection);
 
 
 // PAGE
@@ -22,7 +23,20 @@ $pagination = new stdClass();
 $pagination->itemsPerPage = 15;
 $pagination->baseUri = '';
 $pagination->page = array_get($_GET, 'page', 1);
-$pagination->totalItems = DB::query('tools')->count();
+
+// $pagination->totalItems = DB::query('tools')->count();
+$result = $db->execute('select * from tools', []);
+
+echo '<pre>DB: ' . print_r($db, true) . '</pre>';
+echo '<pre>Page: ' . print_r($page, true) . '</pre>';
+echo '<pre>Pagination: ' . print_r($pagination, true) . '</pre>';
+
+// $result = $db->query('tools')->where('id', '=', 1)->build();
+echo '<pre>Query Result: ' . print_r($result, true) . '</pre>';
+
+die();
+
+
 $pagination->offset = ($pagination->page - 1) * $pagination->itemsPerPage;
 $pagination->pages = ceil($pagination->totalItems / $pagination->itemsPerPage);
 
@@ -35,7 +49,7 @@ $categories = DB::select('tool_categories');
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="home-page content">
+<div class="container container-fixed">
 
   <h2>Welcome to TOOL ORACLE</h2>
   <?php if ($message) echo "<b>$message</b>"; ?>

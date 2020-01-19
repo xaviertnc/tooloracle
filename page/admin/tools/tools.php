@@ -91,7 +91,7 @@ $categories = DB::select('tool_categories');
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="page home">
+<div class="container container-fixed">
 
   <h2>ADMIN Tools</h2>
 
