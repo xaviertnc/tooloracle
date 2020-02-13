@@ -10,13 +10,13 @@
   <link href="css/font-awesome.min.css" rel="stylesheet">
   <link href="css/pure-select.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-146283830-1"></script>
+<!--   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-146283830-1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'UA-146283830-1');
-  </script>
+  </script> -->
 </head>
 <body>
 <noscript>This page will not display correctly without Javascript enabled.</noscript>
