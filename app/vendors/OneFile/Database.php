@@ -6,30 +6,35 @@ use Exception;
 
 /**
  *
- * Query Statement Builder Class(es)
+ * Database Class Collection
  *
  * @author: C. Moller
  * @date: 08 Jan 2017
  *
- * @update: C. Moller
- *   - Moved to OneFile 24 Jan 2017
+ * @update: C. Moller - 24 Jan 2017
+ *   - Moved to OneFile
+ *
+ * @update: C. Moller - 19 Jan 2020
+ *   - Simplify classes + Change query builder syntax!
+ *   - Re-write build() methods
  *
  *
  * Usage Example(s):
  * -----------------
- * DB::query->from('view_uitstallings')
- * ->where('pakket_id', '=', $pakket_id)
- * ->where('id', '>', $id, ['ignore'=>[null]])
- * ->where('refno', 'IS NULL')
- * ->where('tag_id', 'IN', (array) $tagIDs)
+ * $db->query->from('view_uitstallings')
+ * ->where('pakket_id=?', $pakket_id)
+ * ->where('id>?', $id, ['ignore'=>null])
+ * ->where('refno IS NULL')
+ * ->where('tag_id IN (?)', implode(',', $tagIDs))
  *
- * ->where('CONCAT(firstname, ' ', lastname)', 'LIKE%', $search)
+ * ->where('CONCAT(firstname, " ", lastname) LIKE ?)', "%$search%")
  *
- * ->where(QueryBuilder::subQuery()
- *    ->where('date', 'BETWEEN', [$fromDate, $toDate], ['ignore'=>[0, null]])
- *    ->orWhere())
+ * ->where($db->subQuery()
+ *    ->where('date BETWEEN (?,?)', [$fromDate, $toDate], ['ignore'=>[0, null]])
+ *    ->orWhere(is_weekend IS NOT NULL)
+ *   )
  *
- * ->orWhere('name', 'LIKE', $name ? "%$name%" : null, ['ignore'=>null])
+ * ->orWhere('name LIKE ?', "%$name%", ['ignore'=>null])
  *
  * ->orderBy([$colA => $colAdir, $colB => $colBdir])
  *
@@ -37,9 +42,15 @@ use Exception;
  *
  * OR
  *
- * ->limit($offset, $itemspp)
- * ->getBy('id', 'name,description');
- * ->get('id,desc');
+ * ->limit($itemspp, $offset)
+ *
+ * ->orderBy(['amount desc', 'time asc'])
+ *
+ * ->orderBy('date desc')
+ *
+ * ->indexBy('id')->getAll('DISTINCT name,description')
+ *
+ * ->getFirst('id,desc')
  *
  */
 
@@ -51,7 +62,7 @@ use Exception;
  */
 class Database extends PDO
 {
-  protected $log = array();
+  public $log = array();
   protected $connection = array();
 
   /**
@@ -113,6 +124,27 @@ class Database extends PDO
 
   /**
    *
+   * @param string $sqlCmd SQL Command e.g. INSERT, UPDATE, DELETE ...
+   * @return \QueryStatement
+   */
+  public function cmd($sqlCmd)
+  {
+    $affectedRows = $this->db->exec($sqlCmd);
+    return $affectedRows;
+  }
+
+  /**
+   *
+   * @param string $sql
+   * @return \QueryStatement
+   */
+  public function queryRaw($sql)
+  {
+    return parent::query($sql);
+  }
+
+  /**
+   *
    * @param string $tableName
    * @return \QueryStatement
    */
@@ -129,6 +161,60 @@ class Database extends PDO
   {
     return new QueryStatement($this);
   }
+
+  public function insertInto($tableName, array $dataset, $ignore_duplicates = false)
+  {
+    foreach($dataset as $column => $value)
+    {
+      $columns_array[] = $column;
+
+      if($this->as_prepared_statement)
+      {
+        $values_array[] = '?';
+        $this->params['DATA'][] = $value;
+      }
+      else
+        $values_array[] = $this->quote($value);
+    }
+
+    $columns = implode(',', $columns_array);
+    $values = implode(',', $values_array);
+
+    $ignore = $ignore_duplicates?' IGNORE':'';
+
+    $this->commands[] = "INSERT$ignore INTO $this->target ($columns) VALUES ($values)";
+    return $this;
+  }
+
+  public function batchInsert($table, array $columns, array $datasets, $ignore_duplicates = false)
+  {
+    $valuesets = '';
+
+    foreach($datasets as $dataset)
+    {
+      foreach($dataset as $value)
+      {
+        if($this->as_prepared_statement)
+        {
+          $values_array[] = '?';
+          $this->params['DATA'][] = $value;
+        }
+        else
+          $values_array[] = $this->quote($value);
+      }
+
+      if($valuesets) $valuesets .= ',';
+
+      $valuesets .= '(' . implode(',', $values_array) . ')';
+      $values_array = array();
+    }
+
+    $columns = implode(',', $columns);
+    $ignore = $ignore_duplicates?' IGNORE':'';
+    $this->commands[] = "INSERT$ignore INTO $table ($columns) VALUES $valuesets";
+    return $this;
+  }
+
 }
 
 
@@ -139,9 +225,11 @@ class Database extends PDO
  */
 class QueryStatement
 {
+  protected $select;
   protected $limit;
   protected $orderBy;
-  protected $expressions = array();
+  protected $indexBy;
+  protected $expressions = [];
 
   public $db;
   public $tableName;
@@ -161,53 +249,66 @@ class QueryStatement
 
   /**
    *
-   * @param string $leftArg
-   * @param string $operator        e.g. '=', '<>', '>', '<', 'IN', ...
-   * @param string|array $rightArg  e.g. 'SomeStringVal' or '1,4,12,34' or [1,4,12,34]
-   * @param array $options          e.g. ['ignore' => ['', 0, null]]
-   * @param string $glue            e.g. 'AND', 'OR'
+   * @param string $paramsExpr  e.g. 'id=?', 'status=? AND age>=?', 'name LIKE ?'
+   * @param mixed  $params      e.g. 100, [100], [1,46], '%john%', ['john']
+   * @param array  $options     e.g. ['ignore' => ['', 0, null], glue => 'OR']
    *
    */
-  public function addExpression($leftArg, $operator = null, $rightArg = null,
-    $options = [], $glue = null)
+  public function addExpression($paramsExpr, $params = null, $options = [])
   {
-    if ( isset($options['ignore']) )
+    if ( ! $params)
     {
-      $value = $rightArg;
+      $params = [];
+    }
+    elseif ( ! is_array($params))
+    {
+      $params = [$params];
+    }
+    // Only do "ignore check" on single param expressions!
+    if ( count($params) == 1 and isset($options['ignore']) )
+    {
+      $value = $params[0];
       $valuesToIgnore = $options['ignore'];
-      if ( in_array($value, $valuesToIgnore) )
+      // Ignore this expression if it has an "ignore me" param value!
+      // Allow processing remaining expressions by returning $this.
+      if ($value === $valuesToIgnore or is_array($valuesToIgnore) and in_array($value, $valuesToIgnore))
       {
-        return $this; // Ignore this test, but allow for subsequent tests via $this.
+        return $this;
       }
     }
-    if ( ! $this->expressions )
+    if ($this->expressions and empty($options['glue']))
     {
-      $glue = null;
+      $options['glue'] = 'AND';
     }
-    $this->expressions[] = new QueryExpression(
-      $leftArg,
-      $operator,
-      $rightArg,
-      $options,
-      $glue
-    );
+    $this->expressions[] = new QueryExpression($paramsExpr, $params, $options);
+    return $this;
+  }
+
+  /**
+   *
+   * @param string $selectDef  e.g. 'id,name', 'DISTINCT firstname', 'COUNT(hasOption)', ...
+   *
+   */
+  public function select($selectDef = '*')
+  {
+    $this->select = $selectDef;
     return $this;
   }
 
   /**
    *
    */
-  public function where($leftArg, $expression_operator = null, $rightArg = null, $options = null)
+  public function where($paramsExpr, $params = [], $options = [])
   {
-    return $this->addExpression($leftArg, $expression_operator, $rightArg, $options, 'AND');
+    return $this->addExpression($paramsExpr, $params, $options);
   }
 
   /**
    *
    */
-  public function orWhere($leftArg, $expression_operator = null, $rightArg = null, $options = null)
+  public function orWhere($paramsExpr, $params = [], $options = [])
   {
-    return $this->addExpression($leftArg, $expression_operator, $rightArg, $options, 'OR');
+    return $this->addExpression($paramsExpr, $params, array_merge($options, [glue => 'OR']));
   }
 
   /**
@@ -242,39 +343,100 @@ class QueryStatement
     return $this;
   }
 
-  public function limit($offset, $itemsPerPage)
+  public function limit($itemsPerPage, $offset = 0)
   {
     $this->limit = " LIMIT $offset,$itemsPerPage";
     return $this;
   }
 
+  public function indexBy($columnName)
+  {
+    $this->indexBy = $columnName;
+    return $this;
+  }
+
   public function build(&$params)
   {
-    if ( empty($this->expressions) ) { return ''; }
     $sql = '';
     foreach ( $this->expressions as $expression ) { $sql .= $expression->build($params); }
     if ( $sql ) { $sql  = 'WHERE ' . $sql; }
     if ( $this->orderBy ) { $sql .= $this->orderBy; }
     if ( $this->limit ) { $sql .= $this->limit; }
-    return $sql;
+    return $this->expressions ? $sql : trim($sql);
   }
 
-  public function fetch()
+  public function count()
   {
-    $sql = $this->build($params);
-    $pdoStatement = $this->db->prepeare($sql);
-    return $pdoStatement->fetch($params)
+    $sql = 'SELECT COUNT(*) FROM ' . $this->tableName;
+    $where = $this->build($params);
+    if ($where) { $sql .= ' ' . $where; }
+    $this->db->log[] = $sql;
+    $preparedPdoStatement = $this->db->queryRaw($sql);
+    return $preparedPdoStatement->fetchColumn();
   }
 
-  public function fetchAll()
+  protected function indexResults($results, $columnName)
   {
-
+    $indexedResult = [];
+    foreach($results as $result)
+    {
+      $indexedResult[$result->{$columnName}] = $result;
+    }
+    return $indexedResult;
   }
 
-  public function execute()
+  public function getAll($select = null, $indexBy = null)
   {
-
+    $sql = 'SELECT ' . ($select ?: $this->select?:'*') . ' FROM ' . $this->tableName;
+    // NOTE: $params is passed to build() by ref. i.e. updated as we build()
+    $where = $this->build($params);
+    if ($where) { $sql .= ' ' . $where; }
+    $this->db->log[] = $sql;
+    $preparedPdoStatement = $this->db->prepare($sql);
+    if ($preparedPdoStatement->execute($params))
+    {
+      return $this->indexBy
+        ? $this->indexResults($preparedPdoStatement->fetchAll(PDO::FETCH_OBJ), $this->indexBy)
+        : $preparedPdoStatement->fetchAll(PDO::FETCH_OBJ);
+    }
+    return [];
   }
+
+  public function getFirst($select = null)
+  {
+    $sql = 'SELECT ' . ($select ?: $this->select?:'*') . ' FROM ' . $this->tableName;
+    $where = $this->build($params);
+    if ($where) { $sql .= ' ' . $where; }
+    $this->db->log[] = $sql;
+    $preparedPdoStatement = $this->db->prepare($sql);
+    if ($preparedPdoStatement->execute($params))
+    {
+      return $preparedPdoStatement->fetch(PDO::FETCH_OBJ);
+    }
+  }
+
+  // public function update(array $dataset)
+  // {
+  //   $sql = "UPDATE {$this->tableName} SET";
+  //   $where = $this->build($params);
+  //   if ($where) { $sql .= ' ' . $where; }
+  //   $this->db->log[] = $sql;
+  //   foreach($dataset as $columnName => $value)
+  //   {
+  //     $assignments[] = "$columnName=?";
+  //     $this->params['DATA'][] = $value;
+  //   }
+
+  //   $assignments = implode(',', $assignments_array);
+  //   $this->commands[] = "UPDATE $table SET $assignments";
+  //   return $this;
+  // }
+
+  // public function delete()
+  // {
+  //   $this->commands[] = "DELETE";
+  //   return $this;
+  // }
 
 } //end: Query Statement Class
 
@@ -286,54 +448,41 @@ class QueryStatement
  * @author: C. Moller
  * @date: 08 Jan 2017
  *
- * @update: C. Moller
- *   - Moved to OneFile 24 Jan 2017
+ * @update: C. Moller - 24 Jan 2017
+ *   - Moved to OneFile
+ *
+ * @update: C. Moller - 19 Jan 2020
+ *   - Simplyfy contructor. No more OPERATOR + GLUE params
+ *   - Re-write build() method
  *
  */
 class QueryExpression
 {
-  protected $leftArg;
-  protected $operator;
-  protected $rightArg;
+  protected $paramsExpr;
+  protected $params;
   protected $options;
-  protected $glue;
 
   /*
-   * @param string $leftArg
-   * @param string $operator         e.g. '=', '<>', '>', '<', 'IN', ...
-   * @param string|array $rightArg   e.g. 'SomeStringVal' or '1,4,12,34' or [1,4,12,34]
-   * @param array $options           e.g. ['ignore' => ['', 0, null]]
-   * @param string $glue             e.g. 'AND', 'OR'
+   * @param string $paramsExpr  e.g. 'id=?', 'status=? AND age>=?', 'name LIKE ?'
+   * @param mixed  $params      e.g. 100, [100], [1,46], '%john%', ['john']
+   * @param array  $options     e.g. ['ignore' => ['', 0, null], glue => 'OR']
    */
-  public function __construct($leftArg, $operator = null, $rightArg = null,
-    $options = null, $glue = null)
+  public function __construct($paramsExpr, $params = null, $options = null)
   {
-    $this->leftArg = $leftArg;
-    $this->operator = $operator;
-    $this->rightArg = $rightArg;
-    $this->options = $options ?: array();
-    $this->glue = $glue;
+    $this->paramsExpr = $paramsExpr;
+    $this->params = $params?:[];
+    $this->options = $options?:[];
   }
 
   public function build(&$params)
   {
-    $glue = $this->glue ? (' ' . $this->glue . ' ') : '';
-    if (is_object($this->leftArg) and ($this->leftArg instanceof QueryStatement))
+    if ( ! $params) { $params = []; }
+    $glue = isset($this->options['glue']) ? (' ' . $this->options['glue'] . ' ') : '';
+    $params = $params + $this->params;
+    if (is_object($this->paramsExpr) and ($this->paramsExpr instanceof QueryStatement))
     {
-      return $glue . '(' . $this->leftArg->build($params) . ')';
+      return $glue . '(' . $this->paramsExpr->build($params) . ')';
     }
-    switch (strtoupper($this->operator))
-    {
-      case 'BETWEEN':
-        $params = array_merge($params, $this->rightArg);
-        return "$glue ({$this->leftArg} BETWEEN ? AND ?)";
-      default:
-        if (isset($this->rightArg))
-        {
-          $params[] = $this->rightArg;
-          return $glue . $this->leftArg . ' ' . $this->operator . ' ?';
-        }
-        return $glue . $this->leftArg . ' ' . $this->operator;
-    }
+    return $glue . $this->paramsExpr;
   }
 }
