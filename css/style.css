@@ -19,14 +19,15 @@ body {
 /*  overflow: auto;*/
 }
 
-button > label {
-  cursor: pointer;
-}
+button > label { cursor: pointer; }
+
+/*h1, h2, h3, h4 { margin-bottom: 0.3em; }*/
 
 a, a:visited { color: darkslateblue; }
 
 input, select, textarea { padding: 3px 5px; }
 
+section { margin-top: 3em; }
 
 
 /* ======= */
@@ -49,6 +50,11 @@ input, select, textarea { padding: 3px 5px; }
 
 .text-center {
   text-align: center;
+}
+
+.align-center {
+  display: block;
+  margin: 0 auto;
 }
 
 .hidden {
@@ -78,7 +84,6 @@ input, select, textarea { padding: 3px 5px; }
 }
 
 .container {
-  display: inline-block;
   border: 0;
   padding: 0;
   margin: 0;
@@ -86,8 +91,15 @@ input, select, textarea { padding: 3px 5px; }
 }
 
 .container-fixed {
+  border: 0;
+  padding: 0;
   max-width: 1024px;
   margin: 0 auto;
+  width: 100%;
+}
+
+.content {
+  padding: 0 2em;
 }
 
 
@@ -106,7 +118,7 @@ input, select, textarea { padding: 3px 5px; }
   width: 100%;
 }
 
-#site-header .container {
+#site-header .container-fixed {
   display: flex;
   align-items: center;
   padding: 0 0.5em;
@@ -140,10 +152,16 @@ input, select, textarea { padding: 3px 5px; }
   display: block;
 }
 
+#site-nav {
+  padding: 0;
+}
+
 .navbar,
 .navbar > nav {
+  align-items: center;
   display: flex;
   width: 100%;
+  justify-content: space-around;
 }
 
 .nav-toggle {
@@ -174,7 +192,7 @@ nav ul {
 nav li > a {
   border: 1px solid transparent;
   white-space: nowrap;
-  padding: 0.67em 1em;
+  padding: 0.5em;
   line-height: 1em;
   text-decoration: none;
 }
@@ -184,17 +202,18 @@ nav li > a:hover {
   border-color: whitesmoke;
 }
 
-#site-nav {
+/*.navbar ul {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 1em;
   flex: auto;
 }
-
+*/
 #auth-nav {
   display: flex;
   align-items: center;
+  padding: 0;
 }
 
 #auth-nav form {
@@ -208,7 +227,7 @@ nav li > a:hover {
   background-color: white;
   font-family: 'Open Sans', sans-serif;
   font-size: 14px;
-  margin: 0 1em;
+  margin: 0 0.5em;
 }
 
 #auth-nav button:hover {
@@ -223,7 +242,7 @@ main {
   padding: 0;
 }
 
-footer {
+#site-footer {
   padding: 0.5em 1em;
   background: whitesmoke;
   margin-top: 1em;
@@ -257,7 +276,7 @@ footer {
 .btn-login {
   border-color: slateblue;
   text-align: center;
-  margin: 0 1em;
+  margin: 0 0.5em;
   padding: 0.5em 1.34em 0.6em;
 }
 
@@ -499,11 +518,6 @@ a.btn-pager {
   /* position: relative; */
 }
 
-.search input {
-  min-width: 90px;
-  text-align: left;
-}
-
 .add-after {
   border: 1px solid grey;
   border-left: 0;
@@ -573,37 +587,60 @@ button.add-after {
 }
 
 
-/* Button Cloud */
-.button-cloud button {
+/* Mini Card Cloud */
+.mini-card-cloud {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mini-card-cloud li {
+  display: flex;
   margin: 0.34em;
-  padding: 0.67em 1em;
   cursor: pointer;
 }
 
-
-/* Action Bars */
-.actionbar {
-  margin-top: 1.5em;
-}
-
-
-.list-header h3 {
-  margin: 0;
-}
-
-
-.list-filter, .list-footer {
+.mini-card-head,
+.mini-card-body {
+  background-color: whitesmoke;
+  border: 1px solid gainsboro;
   display: flex;
-  margin: 1.5em -1em 1.5em -1em;
-  padding: 0 0.5em;
+}
+
+.mini-card-head {
+  border-right: none;
+  padding: 0.67em 1.34em;
+}
+
+.mini-card-body {
+  padding: 0.67em 0.67em;
+}
+
+
+/* Bars */
+#tools-list footer,
+.search-bar, .list-header {
+  display: flex;
+  padding: 0.5em;
   justify-content: space-between;
   flex-wrap: wrap;
   background: oldlace;
   align-items: center;
 }
 
-.list-filter > *, .list-footer > * {
+/*#tools-list footer > * {
   margin: 0.5em;
+}
+*/
+.actionbar {
+  margin-top: 1.5em;
+}
+
+.search-bar input {
+  min-width: 90px;
+  text-align: left;
 }
 
 

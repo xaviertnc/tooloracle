@@ -15,7 +15,7 @@ unset($app->state['message']);
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="answers content">
+<div class="answers container-fixed content">
 
   <h2>Q&A's</h2>
 

@@ -1,7 +1,6 @@
 </main>
-<br>
-<footer>
-	<div class="content">
+<footer id="site-footer">
+	<div class="container">
     <span>&copy; TOOL ORACLE <?= date('Y') ?></span>
   </div>
 </footer>

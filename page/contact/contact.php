@@ -23,11 +23,10 @@ unset($app->state['message']);
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="contact-page content">
+<div class="contact-page container-fixed content">
 
-  <h2>Contact Us</h2>
-
-  <section>
+  <section class="align-center" style="max-width:320px">
+    <h2>Contact Us</h2>
     <br>
     <form method="POST">
 

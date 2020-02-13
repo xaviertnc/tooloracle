@@ -15,12 +15,11 @@ unset($app->state['message']);
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="howto content">
+<div class="howto container-fixed content">
 
   <h2>How To Guides</h2>
 
   <section>
-  	ItemId = <?=$request->itemId?><br>
     Content goes here...
   </section>
 

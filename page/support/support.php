@@ -15,7 +15,7 @@ unset($app->state['message']);
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="support content">
+<div class="support container-fixed content">
 
   <h2>Support</h2>
 

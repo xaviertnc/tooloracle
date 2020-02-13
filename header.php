@@ -21,7 +21,7 @@
 <body>
 <noscript>This page will not display correctly without Javascript enabled.</noscript>
 <header id="site-header">
-  <div class="container container-fixed">
+  <div class="container-fixed">
     <a id="site-brand" href="<?=$app->env->siteUrl?>">
       <img id="site-logo" src="img/logo.png" alt="Site Logo">
       <?php if ( ! $auth->loggedIn): ?>
