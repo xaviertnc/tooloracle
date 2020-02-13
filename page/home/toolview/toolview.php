@@ -4,7 +4,7 @@
 if ( ! defined('__APP_START__')) die(); // Silence is golden
 
 
-DB::connect($app->env->dbConnection);
+$db = new OneFile\Database($app->env->dbConnection);
 
 
 $page = new stdClass();
@@ -14,19 +14,19 @@ $page->title = 'Tool Detail';
 $tool_id = array_get($_GET, 'id', 0);
 
 
-$tool = DB::first('tools', 'WHERE id=?', [$tool_id]);
-$plans = DB::select('plans WHERE tool_id=?', [$tool_id]);
+$tool = $db->query('tools')->where('id=?', $tool_id)->getFirst();
+$plans = $db->query('plans')->where('tool_id=?', $tool_id)->getAll();
 
 foreach($plans as $plan)
 {
-  $plan->metrics = DB::select('plan_metrics WHERE plan_id=?', [$plan->id]);
+  $plan->metrics = $db->query('plan_metrics')->where('plan_id=?', $plan->id)->getAll();
 }
 
 
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="page tool-view">
+<div class="page tool-view container-fixed">
   <style>
     p { margin: 0.5em; line-height: 1.15em; }
     h3 { margin: 2em 0 0; }

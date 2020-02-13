@@ -7,7 +7,7 @@ if ( ! defined('__APP_START__')) die(); // Silence is golden
 if ( ! $auth->loggedIn) { header('location:login'); }
 
 
-DB::connect($app->env->dbConnection);
+$db = new OneFile\Database($app->env->dbConnection);
 
 
 if ($request->method == 'POST') {
@@ -19,14 +19,15 @@ if ($request->method == 'POST') {
     'description' => $_POST['description'],
     'seq' => $_POST['seq'],
   ];
-  DB::insertInto('tools', $data);
 
-  $tool_id = DB::lastInsertId();
+  $db->insertInto('tools', $data);
+
+  $tool_id = $db->lastInsertId();
 
   $feature_ids = json_decode($_POST['features']);
 
   foreach($feature_ids?:[] as $feature_id) {
-    DB::insertInto('tool_features', [
+    $db->insertInto('tool_features', [
       'tool_id' => $tool_id,
       'feature_id' => $feature_id
     ]);
@@ -44,13 +45,13 @@ if (isset($_GET['ajax']))
   switch($_GET['ajax'])
   {
     case 'getSubCategories':
-      $data = DB::select('tool_subcategories WHERE category_id=?',
-        [array_get($_GET, 'id', 0)]);
+      $data = $db->query('tool_subcategories')->where('category_id=?',
+        array_get($_GET, 'id', 0))->getAll();
       break;
     case 'getFeatures':
       $data = array_map(function($feature) {
         return ['value' => $feature->id, 'label' => $feature->name];
-      }, DB::select('features'));
+      }, $db->query('features')->getAll());
       break;
     default:
       $data = ['error' => 'Oops, something went wrong!'];
@@ -78,20 +79,20 @@ $pagination = new stdClass();
 $pagination->itemsPerPage = 10;
 $pagination->baseUri = 'admin/tools';
 $pagination->page = array_get($_GET, 'page', 1);
-$pagination->totalItems = DB::query('tools')->count();
+$pagination->totalItems = $db->query('tools')->count();
 $pagination->offset = ($pagination->page - 1) * $pagination->itemsPerPage;
 $pagination->pages = ceil($pagination->totalItems / $pagination->itemsPerPage);
 
 
 // DATA
-$tools = DB::query('tools')->limit($pagination->offset, $pagination->itemsPerPage)->get();
-$categories = DB::select('tool_categories');
+$tools = $db->query('tools')->limit($pagination->itemsPerPage, $pagination->offset)->getAll();
+$categories = $db->query('tool_categories')->getAll();
 
 
 include $app->env->rootPath . '/header.php';
 
 ?>
-<div class="container container-fixed">
+<div class="container-fixed">
 
   <h2>ADMIN Tools</h2>
 
