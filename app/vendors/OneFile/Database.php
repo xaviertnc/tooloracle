@@ -6,7 +6,7 @@ use Exception;
 
 /**
  *
- * Database Class Collection
+ * Database Class
  *
  * @author: C. Moller
  * @date: 08 Jan 2017
@@ -30,7 +30,7 @@ use Exception;
  * ->where('CONCAT(firstname, " ", lastname) LIKE ?)', "%$search%")
  *
  * ->where($db->subQuery()
- *    ->where('date BETWEEN (?,?)', [$fromDate, $toDate], ['ignore'=>[0, null]])
+ *    ->where('date BETWEEN (?,?)', [$fromDate, $toDate])
  *    ->orWhere(is_weekend IS NOT NULL)
  *   )
  *
@@ -160,59 +160,6 @@ class Database extends PDO
   public function subQuery()
   {
     return new QueryStatement($this);
-  }
-
-  public function insertInto($tableName, array $dataset, $ignore_duplicates = false)
-  {
-    foreach($dataset as $column => $value)
-    {
-      $columns_array[] = $column;
-
-      if($this->as_prepared_statement)
-      {
-        $values_array[] = '?';
-        $this->params['DATA'][] = $value;
-      }
-      else
-        $values_array[] = $this->quote($value);
-    }
-
-    $columns = implode(',', $columns_array);
-    $values = implode(',', $values_array);
-
-    $ignore = $ignore_duplicates?' IGNORE':'';
-
-    $this->commands[] = "INSERT$ignore INTO $this->target ($columns) VALUES ($values)";
-    return $this;
-  }
-
-  public function batchInsert($table, array $columns, array $datasets, $ignore_duplicates = false)
-  {
-    $valuesets = '';
-
-    foreach($datasets as $dataset)
-    {
-      foreach($dataset as $value)
-      {
-        if($this->as_prepared_statement)
-        {
-          $values_array[] = '?';
-          $this->params['DATA'][] = $value;
-        }
-        else
-          $values_array[] = $this->quote($value);
-      }
-
-      if($valuesets) $valuesets .= ',';
-
-      $valuesets .= '(' . implode(',', $values_array) . ')';
-      $values_array = array();
-    }
-
-    $columns = implode(',', $columns);
-    $ignore = $ignore_duplicates?' IGNORE':'';
-    $this->commands[] = "INSERT$ignore INTO $table ($columns) VALUES $valuesets";
-    return $this;
   }
 
 }
@@ -415,28 +362,24 @@ class QueryStatement
     }
   }
 
-  // public function update(array $dataset)
-  // {
-  //   $sql = "UPDATE {$this->tableName} SET";
-  //   $where = $this->build($params);
-  //   if ($where) { $sql .= ' ' . $where; }
-  //   $this->db->log[] = $sql;
-  //   foreach($dataset as $columnName => $value)
-  //   {
-  //     $assignments[] = "$columnName=?";
-  //     $this->params['DATA'][] = $value;
-  //   }
-
-  //   $assignments = implode(',', $assignments_array);
-  //   $this->commands[] = "UPDATE $table SET $assignments";
-  //   return $this;
-  // }
-
-  // public function delete()
-  // {
-  //   $this->commands[] = "DELETE";
-  //   return $this;
-  // }
+  public function update($data = null)
+  {
+    $values = [];
+    $setPairs = [];
+    foreach($data as $colName => $value)
+    {
+      $setPairs[] = "$colName=?";
+      $values[] = $value;
+    }
+    $setPairsSql = implode(',', $setPairs);
+    $sql = "UPDATE {$this->tableName} SET {$setPairsSql}";
+    $where = $this->build($params);
+    if ($where) { $sql .= ' ' . $where; }
+    $this->db->log[] = $sql;
+    $preparedPdoStatement = $this->db->prepare($sql);
+    $preparedPdoStatement->execute(array_merge($values, $params));
+    return $preparedPdoStatement->rowCount();
+  }
 
 } //end: Query Statement Class
 
