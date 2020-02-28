@@ -18,8 +18,16 @@ use Exception;
  *   - Simplify classes + Change query builder syntax!
  *   - Re-write build() methods
  *
+ * @update: C. Moller - 29 Feb 2020
+ *   - Add db->insertInto()
+ *   - Add db->updateOrInsertInto()
+ *   - Add db->arrayIsSingleRow()
+ *   - Add db->indexList()
+ *   - Add db->query()->update()
+ *   - Add db->query()->delete()
  *
- * Usage Example(s):
+ *
+ * Query Examples:
  * -----------------
  * $db->query->from('view_uitstallings')
  * ->where('pakket_id=?', $pakket_id)
@@ -51,6 +59,10 @@ use Exception;
  * ->indexBy('id')->getAll('DISTINCT name,description')
  *
  * ->getFirst('id,desc')
+ *
+ *
+ * Insert Examples:
+ * -----------------
  *
  */
 
@@ -114,7 +126,7 @@ class Database extends PDO
 
   public function commit()
   {
-    return parent::comit();
+    return parent::commit();
   }
 
   public function rollback()
@@ -162,7 +174,196 @@ class Database extends PDO
     return new QueryStatement($this);
   }
 
-}
+
+  /**
+   * Inserts a single or multiple data rows into a database table.
+   * Auto detect multi-row insert.
+   * @param string $tableName
+   * @param array|object $row
+   * @return boolean success
+   */
+  public function insertInto( $tableName, $row )
+  {
+    if( ! $row ) { return false; }
+    if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
+    {
+      $this->log[] = 'Multi-row = TRUE';
+      $rows = $row;
+    }
+    else
+    {
+      $rows = [ $row ];
+    }
+    $i = 0;
+    $sql = '';
+    $qMarks = [];
+    $colNames = [];
+    $affectedRows = [ 'insert' => 0, 'failed' => 0 ];
+    try {
+      $this->beginTransaction();
+      foreach( $rows as $row )
+      {
+        if( is_object($row) )
+        {
+          $row = (array) $row;
+        }
+        if( $i == 0 )
+        {
+          foreach($row as $colName => $colValue)
+          {
+            $qMarks[] = '?';
+            $colNames[] = $colName;
+          }
+          $qMarksSql = implode( ',', $qMarks );
+          $colNamesSql = implode( ',', $colNames );
+          $sql = "INSERT INTO {$tableName} ({$colNamesSql}) VALUES ({$qMarksSql})";
+          $preparedPdoStatement = $this->prepare( $sql );
+          $this->log[] = 'Batch stmt: ' . $sql;
+        }
+        // Execute the same prepared statement for each row provided!
+        if( $preparedPdoStatement->execute( array_values( $row ) ) )
+        {
+          $affectedRows[ 'insert' ]++;
+        }
+        else {
+          $affectedRows[ 'failed' ]++;
+        }
+        $i++;
+      }
+      $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
+      $this->commit();
+    }
+    catch( Exception $e )
+    {
+      $insertCount = 0;
+      $this->rollback();
+      throw $e;
+    }
+    return $insertCount;
+  } // end: batchInsert
+
+  /**
+   * Update OR Insert a single or multiple rows into a database table.
+   * PS: The table MUST have UNIQUE primary key contraint for this to work!
+   * @param string $tableName
+   * @param array $rows
+   * @return boolean success
+   */
+  public function updateOrInsertInto( $tableName, $rows = null )
+  {
+    if( ! $row ) { return false; }
+    if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
+    {
+      $this->log[] = 'Multi-row = TRUE';
+      $rows = $row;
+    }
+    else
+    {
+      $rows = [ $row ];
+    }
+    $sql = '';
+    $qMarks = [];
+    $setPairs = [];
+    $colNames = [];
+    $affectedRows = [ 'new' => 0, 'updated' => 0 ];
+    try {
+      $this->beginTransaction();
+      // Extract column info from the first row!
+      //  + Build SQL and prepare statements based on info
+      $firstRow = reset( $rows );
+      if( $rowsAreObjects = is_object( $firstRow ) )
+      {
+        $firstRow = (array) $firstRow;
+      }
+      // $this->log[] = 'updateOrInsert() firstRow: ' . print_r( $firstRow, true );
+      foreach($firstRow as $colName => $colValue)
+      {
+        $qMarks[]   = '?';
+        $colNames[] = $colName;
+        $updPairs[] = "$colName=VALUES($colName)";
+      }
+      $qMarksSql   = implode( ',', $qMarks   );
+      $colNamesSql = implode( ',', $colNames );
+      $updPairsSql = implode( ',', $updPairs );
+      $sql = "INSERT INTO {$tableName} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
+      $sql.= "ON DUPLICATE KEY UPDATE {$updPairsSql};";
+      $preparedPdoStatement = $this->prepare( $sql );
+      $this->log[] = 'Batch stmt: ' . $sql;
+      // $this->log[] = 'updateOrInsert() rows: ' . print_r( $rows, true );
+      // Insert or update rows...
+      foreach( $rows as $i => $row )
+      {
+        $params = array_values( $rowsAreObjects ? (array) $row : $row );
+        // $this->log[] = 'params: ' . print_r($params, true);
+        $preparedPdoStatement->execute( $params );
+        switch( $preparedPdoStatement->rowCount() )
+        {
+          case 1: $affectedRows[ 'new' ]++; break;
+          case 2: $affectedRows[ 'updated' ]++; break;
+        }
+      } // end: Update rows loop
+      $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
+      $this->commit();
+    } // end: try
+    catch( Exception $e )
+    {
+      $this->rollback();
+      throw $e;
+    } // end: catch
+    return $affectedRows;
+  } // end: updateOrInsert
+
+  /**
+   * Utillity
+   * Detect if an ARRAY represents a
+   * single DB row or a collection of rows.
+   * @param array $array
+   * @return boolean  yes/no
+   */
+  public function arrayIsSingleRow( array $array )
+  {
+    return is_scalar( reset( $array ) );
+  }
+
+  /**
+   * Utility
+   * Re-index a list of Objects or Arrays.
+   * Use a SINGLE or MULTIPLE item properties as the new index.
+   * @param array $list
+   * @param string|array $propNames The name (str) or names (array)
+   *   of item properties that should make up the new index.
+   * @return boolean success
+   */
+  public function indexList( $list, $propNames )
+  {
+    $indexedList = [];
+    if( ! is_array( $propNames ) )
+    {
+      $indexPropName = $propNames;
+      foreach( $list as $listItem )
+      {
+        $li = (array) $listItem;
+        $indexedList[ $li[ indexPropName ] ] = $listItem;
+      }
+    }
+    else
+    {
+      foreach( $list as $listItem )
+      {
+        $li = (array) $listItem;
+        $indexPropValues = [];
+        foreach( $propNames as $indexPropName )
+        {
+          $indexPropValues[] = $li[$indexPropName];
+        }
+        $index = implode( '-', $indexPropValues );
+        $indexedList[ $index ] = $listItem;
+      }
+    }
+    return $indexedList;
+  } // end: indexList
+
+} // end: Database class
 
 
 /**
@@ -296,9 +497,9 @@ class QueryStatement
     return $this;
   }
 
-  public function indexBy($columnName)
+  public function indexBy($columnNames)
   {
-    $this->indexBy = $columnName;
+    $this->indexBy = $columnNames;
     return $this;
   }
 
@@ -322,62 +523,63 @@ class QueryStatement
     return $preparedPdoStatement->fetchColumn();
   }
 
-  protected function indexResults($results, $columnName)
+  public function getAll( $select = null, $indexBy = null )
   {
-    $indexedResult = [];
-    foreach($results as $result)
-    {
-      $indexedResult[$result->{$columnName}] = $result;
-    }
-    return $indexedResult;
-  }
-
-  public function getAll($select = null, $indexBy = null)
-  {
-    $sql = 'SELECT ' . ($select ?: $this->select?:'*') . ' FROM ' . $this->tableName;
+    $sql = 'SELECT ' . ( $select ?: $this->select?:'*' ) . ' FROM ' . $this->tableName;
     // NOTE: $params is passed to build() by ref. i.e. updated as we build()
-    $where = $this->build($params);
-    if ($where) { $sql .= ' ' . $where; }
+    $where = $this->build( $params );
+    if( $where ) { $sql .= ' ' . $where; }
     $this->db->log[] = $sql;
-    $preparedPdoStatement = $this->db->prepare($sql);
-    if ($preparedPdoStatement->execute($params))
+    $preparedPdoStatement = $this->db->prepare( $sql );
+    if( $preparedPdoStatement->execute( $params ) )
     {
       return $this->indexBy
-        ? $this->indexResults($preparedPdoStatement->fetchAll(PDO::FETCH_OBJ), $this->indexBy)
-        : $preparedPdoStatement->fetchAll(PDO::FETCH_OBJ);
+        ? $this->db->indexList( $preparedPdoStatement->fetchAll( PDO::FETCH_OBJ ), $this->indexBy )
+        : $preparedPdoStatement->fetchAll( PDO::FETCH_OBJ );
     }
     return [];
   }
 
-  public function getFirst($select = null)
+  public function getFirst( $select = null )
   {
-    $sql = 'SELECT ' . ($select ?: $this->select?:'*') . ' FROM ' . $this->tableName;
-    $where = $this->build($params);
-    if ($where) { $sql .= ' ' . $where; }
+    $sql = 'SELECT ' . ( $select ?: $this->select?:'*' ) . ' FROM ' . $this->tableName;
+    $where = $this->build( $params );
+    if( $where ) { $sql .= ' ' . $where; }
     $this->db->log[] = $sql;
-    $preparedPdoStatement = $this->db->prepare($sql);
-    if ($preparedPdoStatement->execute($params))
+    $preparedPdoStatement = $this->db->prepare( $sql );
+    if( $preparedPdoStatement->execute( $params ) )
     {
-      return $preparedPdoStatement->fetch(PDO::FETCH_OBJ);
+      return $preparedPdoStatement->fetch( PDO::FETCH_OBJ );
     }
   }
 
-  public function update($data = null)
+  public function update( $data = null )
   {
     $values = [];
     $setPairs = [];
-    foreach($data as $colName => $value)
+    foreach( $data as $colName => $value )
     {
       $setPairs[] = "$colName=?";
       $values[] = $value;
     }
-    $setPairsSql = implode(',', $setPairs);
+    $setPairsSql = implode( ',', $setPairs );
     $sql = "UPDATE {$this->tableName} SET {$setPairsSql}";
-    $where = $this->build($params);
-    if ($where) { $sql .= ' ' . $where; }
+    $where = $this->build( $params );
+    if( $where ) { $sql .= ' ' . $where; }
     $this->db->log[] = $sql;
-    $preparedPdoStatement = $this->db->prepare($sql);
-    $preparedPdoStatement->execute(array_merge($values, $params));
+    $preparedPdoStatement = $this->db->prepare( $sql );
+    $preparedPdoStatement->execute( array_merge( $values, $params ) );
+    return $preparedPdoStatement->rowCount();
+  }
+
+  public function delete()
+  {
+    $sql = "DELETE FROM {$this->tableName}";
+    $where = $this->build( $params );
+    if( $where ) { $sql .= ' ' . $where; }
+    $this->db->log[] = $sql;
+    $preparedPdoStatement = $this->db->prepare( $sql );
+    $preparedPdoStatement->execute( $params );
     return $preparedPdoStatement->rowCount();
   }
 
