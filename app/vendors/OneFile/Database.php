@@ -26,43 +26,63 @@ use Exception;
  *   - Add db->query()->update()
  *   - Add db->query()->delete()
  *
+ * @update: C. Moller - 04 Mar 2020
+ *   - Add db->update()
+ *
  *
  * Query Examples:
  * -----------------
- * $db->query->from('view_uitstallings')
+ * $db->query->from('view_exhibitions')
+ * $db->query->from('tbl_users')
+ *
+ * ->select('id,desc AS bio')
+ * ->select('count(id) as TotalItems')
+ * ->select('*,CONCAT(firstname," ",lastname) as name')
+ *
+ * ->where('refno IS NULL')
  * ->where('pakket_id=?', $pakket_id)
  * ->where('id>?', $id, ['ignore'=>null])
- * ->where('refno IS NULL')
- * ->where('tag_id IN (?)', implode(',', $tagIDs))
+ * ->where('tag_id', $arrTagIDs, ['test'=>'IN'])
+ * ->where('tag_id', ['one','two','three'], ['test'=>'NOT IN'])
+ * ->where('tag_id NOT IN (?,?,?)' , ['one','two','three'], ['ignore'=>null])
+ * ->where('tag_id IN (' . implode(',', $arTagIDs) . ')') // Unsafe
+ * ->where(
+ *   $db->subQuery()
+ *     ->where('date1 BETWEEN (?,?)', [$minDate,$maxDate])         // Exclusive
+ *     ->where('date2', [$fromDate,$toDate], ['test'=>'FROM TO'])  // Inclusive
+ *     ->where('age', [$minAge,$maxAge], ['test'=>'FROM TO'])
+ *     ->orWhere(is_weekend IS NOT NULL)
+ * )
  *
- * ->where('CONCAT(firstname, " ", lastname) LIKE ?)', "%$search%")
- *
- * ->where($db->subQuery()
- *    ->where('date BETWEEN (?,?)', [$fromDate, $toDate])
- *    ->orWhere(is_weekend IS NOT NULL)
- *   )
- *
- * ->orWhere('name LIKE ?', "%$name%", ['ignore'=>null])
- *
- * ->orderBy([$colA => $colAdir, $colB => $colBdir])
- *
- * ->getResults();
- *
- * OR
- *
- * ->limit($itemspp, $offset)
- *
- * ->orderBy(['amount desc', 'time asc'])
+ * ->orWhere('CONCAT(firstname," ",lastname) LIKE ?)', "%$nameTerm%")
+ * ->orWhere('name LIKE ?', "%$nameTerm%", ['ignore'=>[null,'']])
+ * ->orWhere("name LIKE '$nameTerm%'") // Unsafe
  *
  * ->orderBy('date desc')
+ * ->orderBy(['amount desc', 'time asc'])
+ * ->orderBy([$col1=>$col1dir, $col2=>$col2dir])
+
+ * ->limit(100)
+ * ->limit(100, 15)
+ * ->limit($itemspp, $offset)
  *
- * ->indexBy('id')->getAll('DISTINCT name,description')
+ * ->indexBy('id')
+ * ->indexBy(['type','color'])  // index == "{type}-{color}"
  *
- * ->getFirst('id,desc')
+ * ->getAll();
+ * ->getAll('id,desc');
+ * ->getAll('DISTINCT name, desc AS bio');
+ *
+ * ->getFirst();
+ * ->getFirst('id,desc');
  *
  *
  * Insert Examples:
  * -----------------
+ * $db->insertInto('tbl_users', $objUser)
+ * $db->insertInto('tbl_users', [$objUser1, $objUser2, ...])
+ * $db->insertInto('tbl_users', $arrUser)
+ * $db->insertInto('tbl_users', [$arrUser1, $arrUser2, ...])
  *
  */
 
@@ -174,7 +194,6 @@ class Database extends PDO
     return new QueryStatement($this);
   }
 
-
   /**
    * Inserts a single or multiple data rows into a database table.
    * Auto detect multi-row insert.
@@ -235,21 +254,23 @@ class Database extends PDO
     }
     catch( Exception $e )
     {
-      $insertCount = 0;
+      $affectedRows[ 'insert' ] = 0;
       $this->rollback();
       throw $e;
     }
-    return $insertCount;
+    return $affectedRows;
   } // end: batchInsert
 
   /**
    * Update OR Insert a single or multiple rows into a database table.
-   * PS: The table MUST have UNIQUE primary key contraint for this to work!
+   * PS: The table MUST have UNIQUE primary key contraint
+   *     for Insert OR Update to work!
    * @param string $tableName
-   * @param array $rows
+   * @param array|stdClass $row
+   * @param boolean $updateOnly
    * @return boolean success
    */
-  public function updateOrInsertInto( $tableName, $rows = null )
+  public function updateOrInsertInto( $tableName, $row = null, $updateOnly = false )
   {
     if( ! $row ) { return false; }
     if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
@@ -276,17 +297,26 @@ class Database extends PDO
         $firstRow = (array) $firstRow;
       }
       // $this->log[] = 'updateOrInsert() firstRow: ' . print_r( $firstRow, true );
-      foreach($firstRow as $colName => $colValue)
+      if( $updateOnly )
       {
-        $qMarks[]   = '?';
-        $colNames[] = $colName;
-        $updPairs[] = "$colName=VALUES($colName)";
+        foreach($firstRow as $colName => $colValue) { $updPairs[] = "$colName=?"; }
+        $updPairsSql = implode( ',', $updPairs );
+        $sql = "UPDATE {$tableName} SET {$updPairsSql};";
       }
-      $qMarksSql   = implode( ',', $qMarks   );
-      $colNamesSql = implode( ',', $colNames );
-      $updPairsSql = implode( ',', $updPairs );
-      $sql = "INSERT INTO {$tableName} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
-      $sql.= "ON DUPLICATE KEY UPDATE {$updPairsSql};";
+      else
+      {
+        foreach($firstRow as $colName => $colValue)
+        {
+          $qMarks[]   = '?';
+          $colNames[] = $colName;
+          $updPairs[] = "$colName=VALUES($colName)";
+        }
+        $qMarksSql   = implode( ',', $qMarks   );
+        $colNamesSql = implode( ',', $colNames );
+        $updPairsSql = implode( ',', $updPairs );
+        $sql = "INSERT INTO {$tableName} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
+        $sql.= "ON DUPLICATE KEY UPDATE {$updPairsSql};";
+      }
       $preparedPdoStatement = $this->prepare( $sql );
       $this->log[] = 'Batch stmt: ' . $sql;
       // $this->log[] = 'updateOrInsert() rows: ' . print_r( $rows, true );
@@ -314,6 +344,17 @@ class Database extends PDO
   } // end: updateOrInsert
 
   /**
+   * Update a single or multiple database table rows in one call.
+   * @param string $tableName
+   * @param array|stdClass $row
+   * @return boolean success
+   */
+  public function update( $tableName, $row = null )
+  {
+    return self::updateOrInsertInto( $tableName, $row, 'update-only' );
+  }
+
+  /**
    * Utillity
    * Detect if an ARRAY represents a
    * single DB row or a collection of rows.
@@ -334,8 +375,10 @@ class Database extends PDO
    *   of item properties that should make up the new index.
    * @return boolean success
    */
-  public function indexList( $list, $propNames )
+  public function indexList( array $list, $propNames )
   {
+    if ( ! $list ) { return $list; }
+
     $indexedList = [];
     if( ! is_array( $propNames ) )
     {
@@ -343,7 +386,7 @@ class Database extends PDO
       foreach( $list as $listItem )
       {
         $li = (array) $listItem;
-        $indexedList[ $li[ indexPropName ] ] = $listItem;
+        $indexedList[ $li[ $indexPropName ] ] = $listItem;
       }
     }
     else
@@ -354,7 +397,7 @@ class Database extends PDO
         $indexPropValues = [];
         foreach( $propNames as $indexPropName )
         {
-          $indexPropValues[] = $li[$indexPropName];
+          $indexPropValues[] = $li[ $indexPropName ];
         }
         $index = implode( '-', $indexPropValues );
         $indexedList[ $index ] = $listItem;
@@ -446,17 +489,19 @@ class QueryStatement
   /**
    *
    */
-  public function where($paramsExpr, $params = [], $options = [])
+  public function where( $paramsExpr, $params = [], $options = [] )
   {
-    return $this->addExpression($paramsExpr, $params, $options);
+    return $this->addExpression( $paramsExpr, $params, $options );
   }
 
   /**
    *
    */
-  public function orWhere($paramsExpr, $params = [], $options = [])
+  public function orWhere( $paramsExpr, $params = [], $options = [] )
   {
-    return $this->addExpression($paramsExpr, $params, array_merge($options, [glue => 'OR']));
+    return $this->addExpression(
+      $paramsExpr, $params, array_merge( $options, [ 'glue' => 'OR' ] )
+    );
   }
 
   /**
@@ -523,7 +568,7 @@ class QueryStatement
     return $preparedPdoStatement->fetchColumn();
   }
 
-  public function getAll( $select = null, $indexBy = null )
+  public function getAll( $select = null )
   {
     $sql = 'SELECT ' . ( $select ?: $this->select?:'*' ) . ' FROM ' . $this->tableName;
     // NOTE: $params is passed to build() by ref. i.e. updated as we build()
@@ -553,10 +598,16 @@ class QueryStatement
     }
   }
 
+  /**
+   * Update a selection of rows with the same data.
+   * @param  array|stdClass $data
+   * @return integer Number of updated rows.
+   */
   public function update( $data = null )
   {
     $values = [];
     $setPairs = [];
+    if( is_object( $data ) ) { $data = (array) $data; }
     foreach( $data as $colName => $value )
     {
       $setPairs[] = "$colName=?";
@@ -608,25 +659,44 @@ class QueryExpression
   protected $options;
 
   /*
-   * @param string $paramsExpr  e.g. 'id=?', 'status=? AND age>=?', 'name LIKE ?'
+   * @param string $paramsExpr  e.g. 'id=?', 'status=? AND age>=?', 'name LIKE ?', 'fieldname_only'
    * @param mixed  $params      e.g. 100, [100], [1,46], '%john%', ['john']
-   * @param array  $options     e.g. ['ignore' => ['', 0, null], glue => 'OR']
+   * @param array  $options     e.g. ['ignore' => ['', 0, null], glue => 'OR', 'test' => 'IN']
    */
   public function __construct($paramsExpr, $params = null, $options = null)
   {
+    $this->options = $options?:[];
+    if( isset( $options['test'] ) )
+    {
+      $test = $options['test'];
+      switch( $test )
+      {
+        case 'IN':
+        case 'NOT IN':
+          $qMarks = array_map( function() { return '?'; }, $params );
+          $qMarksSql = implode( ',', $qMarks );
+          $paramsExpr .= " $test ($qMarksSql)";
+          break;
+        case 'FROM TO':
+          $paramsExpr = "$paramsExpr >= ? AND $paramsExpr <= ?";
+          break;
+      }
+    }
     $this->paramsExpr = $paramsExpr;
     $this->params = $params?:[];
-    $this->options = $options?:[];
   }
 
   public function build(&$params)
   {
-    if ( ! $params) { $params = []; }
-    $glue = isset($this->options['glue']) ? (' ' . $this->options['glue'] . ' ') : '';
-    $params = $params + $this->params;
-    if (is_object($this->paramsExpr) and ($this->paramsExpr instanceof QueryStatement))
+    if( ! $params ) { $params = []; }
+    $glue = isset( $this->options[ 'glue' ] )
+      ? ( ' ' . $this->options[ 'glue' ] . ' ' )
+      : '';
+    $params = array_merge( $params, $this->params );
+    if( is_object( $this->paramsExpr ) and
+      ( $this->paramsExpr instanceof QueryStatement ) )
     {
-      return $glue . '(' . $this->paramsExpr->build($params) . ')';
+      return $glue . '(' . $this->paramsExpr->build( $params ) . ')';
     }
     return $glue . $this->paramsExpr;
   }
