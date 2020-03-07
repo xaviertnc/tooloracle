@@ -263,35 +263,35 @@ class Database extends PDO
    * options dynamically / incrementally while keeping your code clean
    * and readable.
    *
-   * @param string $fromExpr Required e.g 'tblusers', 'tblusers AS u'
+   * @param string $tablesExpr Required e.g 'tblusers', 'tblusers AS u'
    * @param array $options Store instance specific META data here.
    * @return PDOQuery
    */
-  public function query( $fromExpr, $options = null )
+  public function query( $tablesExpr, $options = null )
   {
-    return new PDOQuery( $this, $fromExpr, $options );
+    return new PDOQuery( $this, $tablesExpr, $options );
   }
 
   /**
-   * Syntax sugar. The same as $db->query() with optional $fromExpr.
+   * Syntax sugar. The same as $db->query() with optional $tablesExpr.
    * Used to create nested queries.
-   * @param string $fromExpr Optional
+   * @param string $tablesExpr Optional
    * @param array $options Optional
    * @return PDOQuery
    */
-  public function subQuery( $fromExpr = null, $options = null )
+  public function subQuery( $tablesExpr = null, $options = null )
   {
-    return $this->query( $fromExpr, $options );
+    return $this->query( $tablesExpr, $options );
   }
 
   /**
    * Inserts a single or multiple data rows into a database table.
    * Auto detect multi-row insert.
-   * @param string $tableName
+   * @param string $tablesExpr
    * @param array|object $row
    * @return boolean success
    */
-  public function insertInto( $tableName, $row )
+  public function insertInto( $tablesExpr, $row )
   {
     if( ! $row ) { return [ 'insert' => 0, 'failed' => 0 ]; }
     if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
@@ -325,7 +325,7 @@ class Database extends PDO
           }
           $qMarksSql = implode( ',', $qMarks );
           $colNamesSql = implode( ',', $colNames );
-          $sql = "INSERT INTO {$tableName} ({$colNamesSql}) VALUES ({$qMarksSql})";
+          $sql = "INSERT INTO {$tablesExpr} ({$colNamesSql}) VALUES ({$qMarksSql})";
           $preparedPdoStatement = $this->prepare( $sql );
           $this->log[] = 'Batch stmt: ' . $sql;
         }
@@ -359,7 +359,7 @@ class Database extends PDO
    *       the data provided! e.g. [[id=>1, ...], ...] where id == PK.
    * NOTE: UPDATE ONLY mode is enabled when we define the `where` option!
    *       See: db->batchUpdate() for more info.
-   * @param string $tableName
+   * @param string $tablesExpr
    * @param array|stdClass $row
    * @param array $options
    *    e.g. $opts = [ 'where' => 'id=?', 'excl'=>['id', 'created_at']    ]
@@ -369,7 +369,7 @@ class Database extends PDO
    *    See db->update()
    * @return boolean success
    */
-  public function updateOrInsertInto( $tableName, $row = null, $options = null )
+  public function updateOrInsertInto( $tablesExpr, $row = null, $options = null )
   {
     if( ! $row ) { return [ 'new' => 0, 'updated' => 0 ]; }
     if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
@@ -440,7 +440,7 @@ class Database extends PDO
         }
         foreach($guardedRow as $colName => $colValue) { $updPairs[] = "$colName=?"; }
         $updPairsSql = implode( ',', $updPairs );
-        $sql = "UPDATE {$tableName} SET {$updPairsSql} WHERE $whereExpr;";
+        $sql = "UPDATE {$tablesExpr} SET {$updPairsSql} WHERE $whereExpr;";
       }
       else
       {
@@ -453,7 +453,7 @@ class Database extends PDO
         $qMarksSql   = implode( ',', $qMarks   );
         $colNamesSql = implode( ',', $colNames );
         $updPairsSql = implode( ',', $updPairs );
-        $sql = "INSERT INTO {$tableName} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
+        $sql = "INSERT INTO {$tablesExpr} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
         $sql.= "ON DUPLICATE KEY UPDATE {$updPairsSql};";
       }
       $preparedPdoStatement = $this->prepare( $sql );
@@ -529,14 +529,14 @@ class Database extends PDO
    * Update multiple database table rows in one go. (UPDATE ONLY)
    * NOTE: Don't forget set the `where` option if your primary key
    *       is NOT just 'id'.  See db->updateOrInsertInto()
-   * @param string $tableName
+   * @param string $tablesExpr
    * @param array|object $rows
    * @param array $options [ 'where'=>[...], 'only'=>[...], 'excl'=>[...], ... ]
    *   $options['where'] = '{strWhereExpr}'  -OR -
    *   $options['where'] = [ '{strWhereExpr}', '{strExpColName1},{strExpColName2},...' ]
    * @return boolean success
    */
-  public function batchUpdate( $tableName, $rows = null, $options = null)
+  public function batchUpdate( $tablesExpr, $rows = null, $options = null)
   {
     if( empty( $options['where'] ) )
     {
@@ -544,7 +544,7 @@ class Database extends PDO
       // having to use REGEX to extract the expression parameter names.
       $options['where'] = [ 'id=?', 'id' ];
     }
-    return self::updateOrInsertInto( $tableName, $rows, $options );
+    return self::updateOrInsertInto( $tablesExpr, $rows, $options );
   }
 
   /**
@@ -645,7 +645,7 @@ class PDOQuery
   protected $whereExpressions = [];
   protected $havingExpressions = [];
   protected $selectExpr;
-  protected $fromExpr;
+  protected $tablesExpr;
   protected $groupByExpr;
   protected $orderByExpr;
   protected $limitExpr;
@@ -653,15 +653,15 @@ class PDOQuery
   /**
    * Create new PDOQuery object.
    * @param object $db PDO Database instance.
-   * @param string $fromExpr FROM expression string in PDO format.
+   * @param string $tablesExpr SQL FROM expression string in PDO format.
    *   e.g. 'tblusers'  - OR -
    *   e.g. 'tblusers u LEFT JOIN tblroles r ON r.id=u.role_id'
    * @param array $options Store instance specific META data here.
    */
-  public function __construct( $db, $fromExpr = null, $options = null )
+  public function __construct( $db, $tablesExpr = null, $options = null )
   {
     $this->db = $db;
-    $this->fromExpr = $fromExpr;
+    $this->tablesExpr = $tablesExpr;
     $this->options = $options ?: [];
   }
 
@@ -793,44 +793,69 @@ class PDOQuery
     return $this;
   }
 
+  public function buildSelectSql( $select = null )
+  {
+    $selectExpr = $select ?: ( $this->selectExpr ?: '*' );
+    return "SELECT $selectExpr FROM {$this->tablesExpr}";
+  }
+
+  public function buildWhereSql( &$params )
+  {
+    $sql = '';
+    foreach( $this->whereExpressions as $whereExpr )
+    {
+      $sql .= $whereExpr->build( $params );
+    }
+    return $sql;
+  }
+
+  public function buildHavingSql( &$params )
+  {
+    $sql = '';
+    foreach( $this->havingExpressions as $havingExpr )
+    {
+      $sql .= $havingExpr->build( $params );
+    }
+    return $sql;
+  }
+
   /**
-   * Build a PDO SQL conditions string using the current
-   * PDOQuery instance configuration.
-   * @param array &$params EMPTY array to receives all PDO params used.
+   * Build a PDO SQL conditions string using
+   * the current PDOQuery instance configuration.
+   * @param array &$params EMPTY array to receive all PDO params used.
    * @return string FULL PDO SQL query conditions string.
    */
-  public function build( &$params )
+  public function buildCondSql( &$params )
   {
     $sql = '';
     if( $this->whereExpressions )
     {
-      $sql .= ' WHERE ';
-      foreach( $this->whereExpressions as $whereExpr )
-      {
-        $sql .= $whereExpr->build( $params );
-      }
+      $sql = ' WHERE ' . $this->buildWhereSql( $params );
     }
     if( $this->groupByExpr ) { $sql .= $this->groupByExpr; }
     if( $this->havingExpressions )
     {
-      $sql .= ' HAVING ';
-      foreach( $this->havingExpressions as $havingExpr )
-      {
-        $sql .= $havingExpr->build( $params );
-      }
+      $sql .= ' HAVING ' . $this->buildHavingSql( $params );
     }
     if( $this->orderByExpr ) { $sql .= $this->orderByExpr; }
     if( $this->limitExpr   ) { $sql .= $this->limitExpr;   }
     return $sql;
   }
 
+  public function buildSql( &$params, $select = null )
+  {
+    $selectSql = $this->buildSelectSql( $select );
+    $condExpr = $this->buildCondSql( $params );
+    $sql = $selectSql.$condSql;
+    $this->db->log[] = $sql;
+    return $sql;
+  }
+
+
   public function getAll( $select = null )
   {
-    $sql = 'SELECT ' . ( $select ?: $this->select?:'*' ) . ' FROM ' . $this->tableName;
-    // NOTE: $params is passed to build() by ref. i.e. updated as we build()
-    $where = $this->build( $params );
-    if( $where ) { $sql .= ' ' . $where; }
-    $this->db->log[] = $sql;
+    // NOTE: $params is passed by ref!
+    $sql = $this->buildSql( $params, $select );
     $preparedPdoStatement = $this->db->prepare( $sql );
     if( $preparedPdoStatement->execute( $params ) )
     {
@@ -846,10 +871,7 @@ class PDOQuery
 
   public function getFirst( $select = null )
   {
-    $sql = 'SELECT ' . ( $select ?: $this->select?:'*' ) . ' FROM ' . $this->tableName;
-    $where = $this->build( $params );
-    if( $where ) { $sql .= ' ' . $where; }
-    $this->db->log[] = $sql;
+    $sql = $this->buildSql( $params, $select );
     $preparedPdoStatement = $this->db->prepare( $sql );
     if( $preparedPdoStatement->execute( $params ) )
     {
@@ -859,10 +881,7 @@ class PDOQuery
 
   public function count()
   {
-    $sql = 'SELECT COUNT(*) FROM ' . $this->tableName;
-    $where = $this->build($params);
-    if ($where) { $sql .= ' ' . $where; }
-    $this->db->log[] = $sql;
+    $sql = $this->buildSql( $params, 'COUNT(*)' );
     $preparedPdoStatement = $this->db->queryRaw($sql);
     return $preparedPdoStatement->fetchColumn();
   }
@@ -883,9 +902,8 @@ class PDOQuery
       $values[] = $value;
     }
     $setPairsSql = implode( ',', $setPairs );
-    $sql = "UPDATE {$this->tableName} SET {$setPairsSql}";
-    $where = $this->build( $params );
-    if( $where ) { $sql .= ' ' . $where; }
+    $sql = "UPDATE {$this->tablesExpr} SET {$setPairsSql}";
+    $sql .= $this->buildCondSql( $params );
     $this->db->log[] = $sql;
     $preparedPdoStatement = $this->db->prepare( $sql );
     $preparedPdoStatement->execute( array_merge( $values, $params ) );
@@ -894,9 +912,8 @@ class PDOQuery
 
   public function delete()
   {
-    $sql = "DELETE FROM {$this->tableName}";
-    $where = $this->build( $params );
-    if( $where ) { $sql .= ' ' . $where; }
+    $sql = "DELETE FROM {$this->tablesExpr}";
+    $sql .= $this->buildCondSql( $params );
     $this->db->log[] = $sql;
     $preparedPdoStatement = $this->db->prepare( $sql );
     $preparedPdoStatement->execute( $params );
@@ -923,53 +940,54 @@ class PDOQuery
  */
 class PDOWhere
 {
-  protected $paramsExpr;
+  protected $whereExpr;
   protected $params;
-  protected $options;
+  protected $glue;
 
   /*
-   * @param string $paramsExpr
+   * @param string $whereExpr
    *   e.g. 'id=?', 'status=? AND age>=?', 'name LIKE ?', 'fieldname_only'
    * @param mixed  $params
    *   e.g. 100, [100], [1,46], '%john%', ['john']
    * @param array  $options
    *   e.g. ['ignore' => ['', 0, null], glue => 'OR', 'test' => 'IN']
    */
-  public function __construct($paramsExpr, $params = null, $options = null)
+  public function __construct( $whereExpr, $params = null, $options = null )
   {
-    $this->options = $options?:[];
-    if( isset( $options['test'] ) )
+    $options = $options ?: [];
+    if( isset( $options[ 'glue' ] ) )
     {
-      $test = $options['test'];
+      $this->glue = $options[ 'glue' ];
+    }
+    if( isset( $options[ 'test' ] ) )
+    {
+      $test = $options[ 'test' ];
       switch( $test )
       {
         case 'IN':
         case 'NOT IN':
           $qMarks = array_map( function() { return '?'; }, $params );
           $qMarksSql = implode( ',', $qMarks );
-          $paramsExpr .= " $test ($qMarksSql)";
+          $whereExpr .= " $test ($qMarksSql)";
           break;
         case 'FROM TO':
-          $paramsExpr = "$paramsExpr >= ? AND $paramsExpr <= ?";
+          $whereExpr = "$whereExpr >= ? AND $whereExpr <= ?";
           break;
       }
     }
-    $this->paramsExpr = $paramsExpr;
-    $this->params = $params?:[];
+    $this->whereExpr = $whereExpr;
+    $this->params = $params ?: [];
   }
 
-  public function build(&$params)
+  public function build( &$params )
   {
     if( ! $params ) { $params = []; }
-    $glue = isset( $this->options[ 'glue' ] )
-      ? ( ' ' . $this->options[ 'glue' ] . ' ' )
-      : '';
     $params = array_merge( $params, $this->params );
-    if( is_object( $this->paramsExpr ) and
-      ( $this->paramsExpr instanceof PDOQuery ) )
-    {
-      return $glue . '(' . $this->paramsExpr->build( $params ) . ')';
+    if( is_object( $this->whereExpr ) )
+    { // I.e $this->whereExpr == instanceof PDOQuery
+      $pdoQuery = $this->whereExpr;
+      return ' ' . $this->glue . $pdoQuery->buildWhereSql( $params );
     }
-    return $glue . $this->paramsExpr;
+    return ' ' . $this->glue . ' ' . $this->whereExpr;
   }
 }
