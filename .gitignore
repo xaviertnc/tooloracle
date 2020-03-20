@@ -1,3 +1,6 @@
+*.min.php
+*.log
+*.zip
 *sublime*
 .env-local
 .htaccess

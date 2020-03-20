@@ -142,46 +142,45 @@ class Database extends PDO
 
   /**
    *
-   * @param array|string $config
-   *   Examples:
-   *   ---------
+   * @param array $config
    *   $config = [
    *    'DBHOST'=>'...',
    *    'DBNAME'=>'...',
    *    'DBUSER'=>'...',
    *    'DBPASS'=>'...'
    *   ];
-   *   - OR -
-   *   $config = __DIR__ . '/dbconfig.php;
    */
   public function __construct( $config = null )
   {
-    if( is_string( $config ) and file_exists( $config ) ) { include( $config ); }
-    elseif( $config and is_array( $config ) ) { $this->config = $config; }
-    else { throw new Exception('Database connect error. No config.', 500); }
-    $dbHost = $this->config['DBHOST'];
-    $dbName = $this->config['DBNAME'];
-    $dbUser = $this->config['DBUSER'];
-    $dbPass = $this->config['DBPASS'];
+    // SAY_hello( __METHOD__ );
+    if( $config and is_array( $config ) ) { $this->config = $config; }
+    else { throw new Exception( 'Database connect error. No config.', 500 ); }
+    $dbHost = $this->config[ 'DBHOST' ];
+    $dbName = $this->config[ 'DBNAME' ];
+    $dbUser = $this->config[ 'DBUSER' ];
+    $dbPass = $this->config[ 'DBPASS' ];
     $dsn = "mysql:host=$dbHost;dbname=$dbName";
     $opts = [ PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES "UTF8"' ];
     parent::__construct( $dsn, $dbUser, $dbPass, $opts );
-    $this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $this->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
   }
 
-  public function beginTransction()
+  public function beginTransaction()
   {
+    SAY_hello( __METHOD__ );
     return parent::beginTransaction();
   }
 
   public function commit()
   {
+    SAY_hello( __METHOD__ );
     return parent::commit();
   }
 
-  public function rollback()
+  public function rollBack()
   {
-    return parent::rollback();
+    SAY_hello( __METHOD__ );
+    return parent::rollBack();
   }
 
   /**
@@ -204,6 +203,7 @@ class Database extends PDO
    */
   public function execRaw( $sqlCommandStr )
   {
+    // SAY_hello( __METHOD__ );
     $affectedRows = parent::exec( $sqlCommandStr );
     return $affectedRows;
   }
@@ -219,6 +219,7 @@ class Database extends PDO
    */
   public function exec( $sqlCommandStr, $queryParams = null )
   {
+    // SAY_hello( __METHOD__ );
     $preparedQuery = $this->prepare( $sqlCommandStr );
     $affectedRows = $preparedQuery->execute( $queryParams );
     return $affectedRows;
@@ -231,6 +232,7 @@ class Database extends PDO
    */
   public function cmd( $sqlCommandStr )
   {
+    // SAY_hello( __METHOD__ );
     return $this->execRaw( $sqlCommandStr );
   }
 
@@ -251,6 +253,7 @@ class Database extends PDO
    */
   public function queryRaw( $sqlQueryStr )
   {
+    // SAY_hello( __METHOD__ );
     return parent::query( $sqlQueryStr );
   }
 
@@ -269,6 +272,7 @@ class Database extends PDO
    */
   public function query( $tablesExpr, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     return new PDOQuery( $this, $tablesExpr, $options );
   }
 
@@ -281,18 +285,43 @@ class Database extends PDO
    */
   public function subQuery( $tablesExpr = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     return $this->query( $tablesExpr, $options );
   }
 
+
+  /**
+   * Deletes ALL rows from a table.
+   *
+   * NOTE: Can NOT be rolled back!
+   * NOTE: Requires DROP privilage!
+   * NOTE: Resets Auto increment to 1
+   * @param  string $tableName
+   * @return boolean Success / Fail
+   */
+  public function truncate( $tableName = null )
+  {
+    // SAY_hello( __METHOD__ );
+    return $this->exec( 'TRUNCATE TABLE ?', $tableName );
+  }
+
+
   /**
    * Inserts a single or multiple data rows into a database table.
-   * Auto detect multi-row insert.
+   *  - Auto detects multi-row insert.
+   *
+   * NOTE: When inserting multiple rows at a time, you might want to
+   * considder wrapping your call in a try/catch with DB transaction control.
+   * I.e. db->beginTransaction, db->commit, db->rollBack.
+   *
    * @param string $tablesExpr
    * @param array|object $row
    * @return boolean success
    */
   public function insertInto( $tablesExpr, $row )
   {
+    // SAY_hello( __METHOD__ );
+    // SHOW_me( $tablesExpr, 'Batch Insert Into TablesExpr' );
     if( ! $row ) { return [ 'insert' => 0, 'failed' => 0 ]; }
     if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
     {
@@ -308,236 +337,241 @@ class Database extends PDO
     $qMarks = [];
     $colNames = [];
     $affectedRows = [ 'insert' => 0, 'failed' => 0 ];
-    try {
-      $this->beginTransaction();
-      foreach( $rows as $row )
-      {
-        if( is_object($row) )
-        {
-          $row = (array) $row;
-        }
-        if( $i == 0 )
-        {
-          foreach($row as $colName => $colValue)
-          {
-            $qMarks[] = '?';
-            $colNames[] = $colName;
-          }
-          $qMarksSql = implode( ',', $qMarks );
-          $colNamesSql = implode( ',', $colNames );
-          $sql = "INSERT INTO {$tablesExpr} ({$colNamesSql}) VALUES ({$qMarksSql})";
-          $preparedPdoStatement = $this->prepare( $sql );
-          $this->log[] = 'Batch stmt: ' . $sql;
-        }
-        // Execute the same prepared statement for each row provided!
-        if( $preparedPdoStatement->execute( array_values( $row ) ) )
-        {
-          $affectedRows[ 'insert' ]++;
-        }
-        else {
-          $affectedRows[ 'failed' ]++;
-        }
-        $i++;
-      }
-      $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
-      $this->commit();
-    }
-    catch( Exception $e )
+    // SHOW_me( $rows, 'Batch Insert Into Rows', 3 );
+    foreach( $rows as $r )
     {
-      $affectedRows[ 'insert' ] = 0;
-      $this->rollback();
-      throw $e;
+      if( is_object( $r ) ) { $r = (array) $r; }
+      if( $i == 0 )
+      {
+        foreach( $r as $colName => $colValue )
+        {
+          $qMarks[] = '?';
+          $colNames[] = $colName;
+        }
+        $qMarksSql = implode( ',', $qMarks );
+        $colNamesSql = implode( ',', $colNames );
+        $sql = "INSERT INTO {$tablesExpr} ({$colNamesSql}) VALUES ({$qMarksSql})";
+        $preparedPdoStatement = $this->prepare( $sql );
+        SHOW_me( $sql, 'Batch Insert Into SQL' );
+        $this->log[] = 'Batch stmt: ' . $sql;
+      }
+      // Execute the same prepared statement for each row provided!
+      if( $preparedPdoStatement->execute( array_values( $r ) ) )
+      {
+        $affectedRows[ 'insert' ]++;
+      }
+      else {
+        $affectedRows[ 'failed' ]++;
+      }
+      $i++;
     }
+    $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
+    SHOW_me( $affectedRows, 'Batch Insert Into affectedRows' );
     return $affectedRows;
   } // end: batchInsert
 
   /**
    * Batch update OR insert multiple database rows in one go.
+   *
    * NOTE: For UpdateOrInsert to work, the target database table MUST have
-   *       a PRIMARY KEY / UNIQUE constaint on at least one or more columns.
-   *       The values of columns with contraints MUST also be included in
-   *       the data provided! e.g. [[id=>1, ...], ...] where id == PK.
+   * a PRIMARY KEY / UNIQUE constraint on at least one or more columns.
+   * The values of columns with contraints MUST also be included in
+   * the data provided! e.g. [[id=>1, ...], ...] where id == PK.
+   *
    * NOTE: UPDATE ONLY mode is enabled when we define the `where` option!
-   *       See: db->batchUpdate() for more info.
+   * See: db->batchUpdate() for more info.
+   *
+   * NOTE: When updating multiple rows at a time, you might want to
+   * considder wrapping your call in a try/catch with DB transaction control.
+   * I.e. db->beginTransaction, db->commit, db->rollBack.
+   *
    * @param string $tablesExpr
-   * @param array|stdClass $row
+   * @param array|object $rows
    * @param array $options
    *    e.g. $opts = [ 'where' => 'id=?', 'excl'=>['id', 'created_at']    ]
    *    e.g. $opts = [ 'where' => 'pk1=? AND pk2=?', 'only' => ['name']   ]
-   *    e.g. $opts = [ 'where' => ['pk=? AND pk2=?', 'pk1,pk1']           ]
+   *    e.g. $opts = [ 'where' => ['pk1=? AND pk2=?', 'pk1,pk2']          ]
    *    e.g. $opts = [ 'only'  => ['name', 'updated_at']                  ]
    *    See db->update()
    * @return boolean success
    */
-  public function updateOrInsertInto( $tablesExpr, $row = null, $options = null )
+  public function updateOrInsertInto( $tablesExpr, $rows = null, $options = null )
   {
-    if( ! $row ) { return [ 'new' => 0, 'updated' => 0 ]; }
-    if( is_array( $row ) and ! $this->arrayIsSingleRow( $row ) )
-    {
-      $this->log[] = 'Multi-row = TRUE';
-      $rows = $row;
-    }
-    else
-    {
-      $rows = [ $row ];
-    }
+    // SAY_hello( __METHOD__ );
+    // SHOW_me( $tablesExpr, 'Batch Update or Insert TablesExpr' );
+    // SHOW_me( $options, 'Batch Update or Insert Options', 10 );
     $sql = '';
     $qMarks = [];
     $setPairs = [];
     $colNames = [];
     $affectedRows = [ 'new' => 0, 'updated' => 0 ];
-    try {
-      $this->beginTransaction();
-      // Extract column info from the first row!
-      //  + Build SQL and prepare statements based on info
-      $guardedRow = [];
-      $firstRow = reset( $rows );
-      if( $rowsAreObjects = is_object( $firstRow ) )
+    if( ! $rows ) { return $affectedRows; }
+    if( is_array( $rows ) and  ! $this->arrayIsSingleRow( $rows ) )
+    {
+      $this->log[] = 'Multi-row = TRUE';
+    }
+    else
+    {
+      $rows = [ $rows ];
+    }
+    // SHOW_me( $rows, 'Batch Update or Insert Rows', 5 );
+    // Extract column info from the first row!
+    //  + Build SQL and prepare statements based on info
+    $guardedRow = [];
+    $firstRow = reset( $rows );
+    if( $rowsAreObjects = is_object( $firstRow ) )
+    {
+      $firstRow = (array) $firstRow;
+    }
+    $where = isset( $options[ 'where' ] ) ? $options[ 'where' ] : null;
+    $only = isset( $options[ 'only' ] ) ? $options[ 'only' ] : null;
+    $exclude = isset( $options[ 'excl' ] ) ? $options[ 'excl' ] : null;
+    if( $only )
+    {
+      foreach( $firstRow as $colName => $colVal )
       {
-        $firstRow = (array) $firstRow;
+        if( in_array($colName, $only) )
+        {
+          $guardedRow[$colName] = $colVal;
+        }
       }
-      // $this->log[] = 'updateOrInsert() firstRow: ' . print_r( $firstRow, true );
-      $where = isset( $options[ 'where' ] ) ? $options[ 'where' ] : null;
-      $only = isset( $options[ 'only' ] ) ? $options[ 'only' ] : null;
-      $exclude = isset( $options[ 'excl' ] ) ? $options[ 'excl' ] : null;
+    }
+    if( $exclude )
+    {
+      foreach( $firstRow as $colName => $colVal )
+      {
+        if( ! in_array($colName, $exclude) )
+        {
+          $guardedRow[$colName] = $colVal;
+        }
+      }
+    }
+    if( ! $guardedRow )
+    {
+      $guardedRow = $firstRow;
+    }
+    if( $where )
+    { // UPDATE ONLY
+      if( is_array( $where ) )
+      { // Use explicitly specified `whereExprColNames`
+        // SAY_hello( 'UPDATE ONLY - EXPLICIT WHERE PARAMS' );
+        $whereExpr = $where[0];
+        $whereExprColNames = explode( ',', $where[1] );
+      }
+      else
+      { // Auto detect `whereExprColNames`, but REGEX :-/
+        // SAY_hello( 'UPDATE ONLY - REGEX WHERE PARAMS' );
+        $whereExpr = $where;
+        $re = '/([^\s!=><]+)[\W]+\?/'; // Simple expressions only!
+        preg_match_all($re, $whereExpr, $matches, PREG_PATTERN_ORDER);
+        $whereExprColNames = isset( $matches[1] ) ? $matches[1] : [];
+      }
+      foreach( $guardedRow as $colName => $colValue ) { $updPairs[] = "$colName=?"; }
+      $updPairsSql = implode( ',', $updPairs );
+      $sql = "UPDATE {$tablesExpr} SET {$updPairsSql} WHERE $whereExpr;";
+      // SHOW_me( json_encode( $whereExprColNames ), 'whereExprColNames' );
+      // SHOW_me( $whereExpr, 'whereExpr' );
+    }
+    else
+    {
+      foreach( $guardedRow as $colName => $colValue )
+      {
+        $qMarks[]   = '?';
+        $colNames[] = $colName;
+        $updPairs[] = "$colName=VALUES($colName)";
+      }
+      $qMarksSql   = implode( ',', $qMarks   );
+      $colNamesSql = implode( ',', $colNames );
+      $updPairsSql = implode( ',', $updPairs );
+      $sql = "INSERT INTO {$tablesExpr} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
+      $sql.= "ON DUPLICATE KEY UPDATE {$updPairsSql};";
+    }
+    $preparedPdoStatement = $this->prepare( $sql );
+    $this->log[] = 'Batch stmt: ' . $sql;
+    SHOW_me( $sql, 'Update or Insert SQL' );
+    // SHOW_me( $qMarks, 'qMarks' );
+    // SHOW_me( $colNames, 'colNames' );
+    // SHOW_me( $updPairs, 'updPairs' );
+    foreach( $rows as $i => $row )
+    {
+      $guardedRow = [];
+      if( $rowsAreObjects )
+      {
+        $row = (array) $row;
+      }
       if( $only )
       {
-        foreach( $firstRow as $colName => $colVal )
+        foreach( $row as $colName => $colVal )
         {
-          if( in_array($colName, $only) )
+          if( in_array( $colName, $only ) )
           {
-            $guardedRow[$colName] = $colVal;
+            $guardedRow[ $colName ] = $colVal;
           }
         }
       }
       if( $exclude )
       {
-        foreach( $firstRow as $colName => $colVal )
+        foreach( $row as $colName => $colVal )
         {
-          if( ! in_array($colName, $exclude) )
+          if( ! in_array( $colName, $exclude ) )
           {
-            $guardedRow[$colName] = $colVal;
+            $guardedRow[ $colName ] = $colVal;
           }
         }
       }
       if( ! $guardedRow )
       {
-        $guardedRow = $firstRow;
+        $guardedRow = $row;
       }
+      $params = array_values( $guardedRow );
       if( $where )
       { // UPDATE ONLY
-        if( is_array( $where ) )
-        { // Use explicitly specified `whereExprColNames`
-          $whereExpr = $where[0];
-          $whereExprColNames = explode( ',', $where[1] );
-        }
-        else
-        { // Auto detect `whereExprColNames`, but REGEX :-/
-          $whereExpr = $where;
-          $re = '/([^\s!=><]+)[\W]+\?/'; // Simple expressions only!
-          preg_match_all($re, $whereExpr, $matches, PREG_SET_ORDER, 0);
-          $whereExprColNames = isset( $matches[1] ) ? $matches[1] : [];
-        }
-        foreach($guardedRow as $colName => $colValue) { $updPairs[] = "$colName=?"; }
-        $updPairsSql = implode( ',', $updPairs );
-        $sql = "UPDATE {$tablesExpr} SET {$updPairsSql} WHERE $whereExpr;";
+        $extraParams = array_map(
+          function( $colName ) use ( $row ) { return $row[ $colName ]; },
+          $whereExprColNames
+        );
+        // SHOW_me( $extraParams, 'extraParams' );
+        $params = array_merge( $params, $extraParams );
+        $preparedPdoStatement->execute( $params );
+        $affectedRows[ 'updated' ] += $preparedPdoStatement->rowCount();
       }
       else
       {
-        foreach($guardedRow as $colName => $colValue)
+        // SHOW_me( $guardedRow, 'guardedRow' );
+        // SHOW_me( $params, 'params' );
+        $preparedPdoStatement->execute( $params );
+        switch( $preparedPdoStatement->rowCount() )
         {
-          $qMarks[]   = '?';
-          $colNames[] = $colName;
-          $updPairs[] = "$colName=VALUES($colName)";
+          case 1: $affectedRows[ 'new' ]++; break;
+          case 2: $affectedRows[ 'updated' ]++; break;
         }
-        $qMarksSql   = implode( ',', $qMarks   );
-        $colNamesSql = implode( ',', $colNames );
-        $updPairsSql = implode( ',', $updPairs );
-        $sql = "INSERT INTO {$tablesExpr} ({$colNamesSql}) VALUES ({$qMarksSql}) ";
-        $sql.= "ON DUPLICATE KEY UPDATE {$updPairsSql};";
       }
-      $preparedPdoStatement = $this->prepare( $sql );
-      $this->log[] = 'Batch stmt: ' . $sql;
-      // $this->log[] = 'updateOrInsert() rows: ' . print_r( $rows, true );
-      // Insert or update rows...
-      foreach( $rows as $i => $row )
-      {
-        $guardedRow = [];
-        if( $rowsAreObjects )
-        {
-          $row = (array) $row;
-        }
-        if( $only )
-        {
-          foreach( $row as $colName => $colVal )
-          {
-            if( in_array($colName, $only) )
-            {
-              $guardedRow[$colName] = $colVal;
-            }
-          }
-        }
-        if( $exclude )
-        {
-          foreach( $row as $colName => $colVal )
-          {
-            if( ! in_array($colName, $exclude) )
-            {
-              $guardedRow[$colName] = $colVal;
-            }
-          }
-        }
-        if( ! $guardedRow )
-        {
-          $guardedRow = $row;
-        }
-        $params = array_values( $guardedRow );
-        if( $where )
-        { // UPDATE ONLY
-          $extraParams = array_map(
-            function( $colName ) use ($row) { return $row[$colName]; },
-            $whereExprColNames
-          );
-          // $this->log[] = 'UPDATE params: ' . print_r($params, true);
-          $params = array_merge( $params, $extraParams );
-          $preparedPdoStatement->execute( $params );
-          $affectedRows[ 'updated' ] += $preparedPdoStatement->rowCount();
-        }
-        else
-        {
-          // $this->log[] = 'params: ' . print_r($params, true);
-          $preparedPdoStatement->execute( $params );
-          switch( $preparedPdoStatement->rowCount() )
-          {
-            case 1: $affectedRows[ 'new' ]++; break;
-            case 2: $affectedRows[ 'updated' ]++; break;
-          }
-        }
-      } // end: Update rows loop
-      $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
-      $this->commit();
-    } // end: try
-    catch( Exception $e )
-    {
-      $this->rollback();
-      throw $e;
-    } // end: catch
+    } // end: Update rows loop
+    $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
+    SHOW_me( $affectedRows, 'Batch Update or Insert affectedRows' );
     return $affectedRows;
   } // end: updateOrInsert
 
   /**
    * Update multiple database table rows in one go. (UPDATE ONLY)
+   *
    * NOTE: Don't forget set the `where` option if your primary key
-   *       is NOT just 'id'.  See db->updateOrInsertInto()
+   * is NOT just 'id'.  See db->updateOrInsertInto()
+   *
+   * NOTE: When updating multiple rows at a time, you might want to
+   * considder wrapping your call in a try/catch with DB transaction control.
+   * I.e. db->beginTransaction, db->commit, db->rollBack.
+   *
    * @param string $tablesExpr
    * @param array|object $rows
-   * @param array $options [ 'where'=>[...], 'only'=>[...], 'excl'=>[...], ... ]
+   * @param array $options [ 'where'=>[...], 'only'=>[...], 'excl'=>[...] ]
    *   $options['where'] = '{strWhereExpr}'  -OR -
-   *   $options['where'] = [ '{strWhereExpr}', '{strExpColName1},{strExpColName2},...' ]
+   *   $options['where'] = [ '{strWhereExpr}', '{colName1},{colName2},..' ]
    * @return boolean success
    */
-  public function batchUpdate( $tablesExpr, $rows = null, $options = null)
+  public function batchUpdate( $tablesExpr, $rows = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     if( empty( $options['where'] ) )
     {
       // We use the ARRAY FORMAT to define `where` to save us later
@@ -556,6 +590,7 @@ class Database extends PDO
    */
   public function arrayIsSingleRow( array $array )
   {
+    // SAY_hello( __METHOD__ );
     return is_scalar( reset( $array ) );
   }
 
@@ -573,56 +608,70 @@ class Database extends PDO
    *       '2-blue' => [ 'id'=>2, 'col'=>'blue', 'name'=>'item2' ]
    *      ]
    * @param array $list
-   * @param string $itemKeyNames Comma separated list of item key names.
-   * @param string $glue String used to join index key values.
+   * @param string $itemKeyNames Comma separated list of item key names to use.
+   * @param array $options [ 'glue' => '-' ]
    * @return boolean success
    */
-  public function indexList( array $list, $itemKeyNames = null, $glue = '-' )
+  public function indexList( array $list, $itemKeyNames = null, $options = null )
   {
-    global $log;
+    // SAY_hello( __METHOD__ );
     if( ! $list ) { return $list; }
     $indexedList = [];
-    $isObjectList = is_object( reset( $list ) );
-    $log->debug( 'DB::indexList(), itemKeyNames(before):' . print_r( $itemKeyNames, true) );
+    $duplicatesCount = 0;
+    $options = $options ?: [];
+    $firstItem = reset( $list );
+    $isObjectList = is_object( $firstItem );
+    $glue = isset( $options[ 'glue' ] ) ? $options[ 'glue' ] : '-';
+    // SHOW_me( $glue, 'indexList: Index parts "glue"' );
     if( $itemKeyNames )
     {
+      if( ! is_string( $itemKeyNames ) )
+      {
+        SAY_hello( 'indexList: ERROR - KEY NAMES PARAM MUST BE A STRING' );
+        throw new Exception( 'DB::indexList() - Key names param must be a string.' );
+      }
       $itemKeyNames = explode( ',', $itemKeyNames );
-      $log->debug( 'DB::indexList(), Exploded itemKeyNames:' . print_r( $itemKeyNames, true) );
     }
     else
     {
       $itemKeyNames = [ 'id' ];
     }
+    // SHOW_me( json_encode( $itemKeyNames ), 'itemKeyNames' );
     // Save a few CPU cycles... ;-)
     if( count( $itemKeyNames ) == 1 )
     {
-      $index = reset( $itemKeyNames );
+      // SAY_hello( 'indexList: USE SINGLE KEY INDEX ROUTINE' );
+      $itemKeyName = reset( $itemKeyNames );
       foreach( $list as $listItem )
       {
         $index = $isObjectList
           ? $listItem->{ $itemKeyName }
           : $listItem[ $itemKeyName ];
+        if( isset( $indexedList[ $index ] ) ) { $duplicatesCount++; }
         $indexedList[ $index ] = $listItem;
       }
     }
     else
     {
-      $log->debug( 'DB::indexList(), itemKeyNames:' . print_r( $itemKeyNames, true) );
-      exit;
+      // SAY_hello( 'indexList: USE MULTI-KEY INDEX ROUTINE' );
       foreach( $list as $listItem )
       {
-        $index = array_reduce( $itemKeyNames,
-          function( $carry, $nextKeyName ) use ( $listItem, $glue )
-          {
-            $itemKey = $isObjectList
+        $index = '';
+        foreach( $itemKeyNames as $itemKeyName )
+        {
+          $itemKey = $isObjectList
             ? $listItem->{ $itemKeyName }
             : $listItem[ $itemKeyName ];
-            return $carry ? $glue.$itemKey : $itemKey;
-          }
-        );
+          $indexPart = $index ? $glue . $itemKey : $itemKey;
+          $index .= $indexPart;
+        }
+        // SHOW_me( $index, 'index' );
+        if( isset( $indexedList[ $index ] ) ) { $duplicatesCount++; }
         $indexedList[ $index ] = $listItem;
       }
     }
+    // SHOW_me( $duplicatesCount, 'DUPLICATE list items (i.e. items with the same PK)' );
+    // SHOW_me( $indexedList, 'indexedList', 5 );
     return $indexedList;
   } // end: indexList
 
@@ -660,6 +709,7 @@ class PDOQuery
    */
   public function __construct( $db, $tablesExpr = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     $this->db = $db;
     $this->tablesExpr = $tablesExpr;
     $this->options = $options ?: [];
@@ -672,6 +722,7 @@ class PDOQuery
    */
   public function select( $selectExpr = '*' )
   {
+    // SAY_hello( __METHOD__ );
     $this->selectExpr = $selectExpr;
     return $this;
   }
@@ -685,6 +736,7 @@ class PDOQuery
    */
   public function where( $whereExpr, $params = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     $options = $options ?: [];
     $params = $params ? ( is_array( $params ) ? $params : [ $params ] ) : [];
     // Only check "ignore" on single param expressions.
@@ -715,8 +767,16 @@ class PDOQuery
    */
   public function orWhere( $whereExpr, $params = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     $options = array_merge( $options?:[], [ 'glue' => 'OR' ] );
     return $this->where( $whereExpr, $params, $options );
+  }
+
+  public function groupBy( $groupBy )
+  {
+    // SAY_hello( __METHOD__ );
+    $this->groupByExpr = $groupBy ? ' GROUP BY ' . $groupBy : null;
+    return $this;
   }
 
   /**
@@ -728,6 +788,7 @@ class PDOQuery
    */
   public function having( $havingExpr, $params = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     $options = $options ?: [];
     $params = $params ? ( is_array( $params ) ? $params : [ $params ] ) : [];
     if( count( $params ) == 1 and isset( $options[ 'ignore' ] ) )
@@ -748,33 +809,16 @@ class PDOQuery
     return $this;
   }
 
-  /**
-   * Append a GROUP expression using OR.
-   * @param string $havingExpr HAVING expression string in PDO format.
-   * @param array|string $params Param value(s) required to replace PDO placeholders.
-   * @param array  $options e.g. ['test'=>'FROM TO'], ['test'=>'IN'], ...
-   * @return object PDOQuery instance
-   */
-  public function orHaving( $havingExpr, $params = null, $options = null )
-  {
-    $options = array_merge( $options?:[], [ 'glue' => 'OR' ] );
-    return $this->having( $havingExpr, $params, $options );
-  }
-
-  public function groupBy( $groupBy )
-  {
-    $this->groupByExpr = $groupBy ? ' GROUP BY ' . $groupBy : null;
-    return $this;
-  }
-
   public function orderBy( $orderBy )
   {
+    // SAY_hello( __METHOD__ );
     $this->orderByExpr = $orderBy ? ' ORDER BY ' . $orderBy : null;
     return $this;
   }
 
   public function limit( $itemsPerPage, $offset = 0 )
   {
+    // SAY_hello( __METHOD__ );
     $this->limitExpr = " LIMIT $offset,$itemsPerPage";
     return $this;
   }
@@ -788,19 +832,22 @@ class PDOQuery
    */
   public function indexBy( $columnNamesStr, $glue = null )
   {
+    // SAY_hello( __METHOD__ );
     $this->indexBy = $columnNamesStr;
     if( isset( $glue ) ) { $this->indexByGlue = $glue; }
     return $this;
   }
 
-  public function buildSelectSql( $select = null )
+  public function buildSelectSql( $selectExpr = null )
   {
-    $selectExpr = $select ?: ( $this->selectExpr ?: '*' );
+    // SAY_hello( __METHOD__ );
+    $selectExpr = $selectExpr ?: ( $this->selectExpr ?: '*' );
     return "SELECT $selectExpr FROM {$this->tablesExpr}";
   }
 
   public function buildWhereSql( &$params )
   {
+    // SAY_hello( __METHOD__ );
     $sql = '';
     foreach( $this->whereExpressions as $whereExpr )
     {
@@ -811,6 +858,7 @@ class PDOQuery
 
   public function buildHavingSql( &$params )
   {
+    // SAY_hello( __METHOD__ );
     $sql = '';
     foreach( $this->havingExpressions as $havingExpr )
     {
@@ -827,6 +875,7 @@ class PDOQuery
    */
   public function buildCondSql( &$params )
   {
+    // SAY_hello( __METHOD__ );
     $sql = '';
     if( $this->whereExpressions )
     {
@@ -842,23 +891,26 @@ class PDOQuery
     return $sql;
   }
 
-  public function buildSql( &$params, $select = null )
+  public function buildSql( &$params, $selectExpr = null )
   {
-    $selectSql = $this->buildSelectSql( $select );
-    $condExpr = $this->buildCondSql( $params );
+    // SAY_hello( __METHOD__ );
+    $selectSql = $this->buildSelectSql( $selectExpr );
+    $condSql = $this->buildCondSql( $params );
     $sql = $selectSql.$condSql;
     $this->db->log[] = $sql;
     return $sql;
   }
 
 
-  public function getAll( $select = null )
+  public function getAll( $selectExpr = null )
   {
+    // SAY_hello( __METHOD__ );
     // NOTE: $params is passed by ref!
-    $sql = $this->buildSql( $params, $select );
+    $sql = $this->buildSql( $params, $selectExpr );
     $preparedPdoStatement = $this->db->prepare( $sql );
     if( $preparedPdoStatement->execute( $params ) )
     {
+      // SAY_hello( 'getAll: EXEC QUERY - OK' );
       return $this->indexBy
         ? $this->db->indexList(
             $preparedPdoStatement->fetchAll( PDO::FETCH_OBJ ),
@@ -866,24 +918,31 @@ class PDOQuery
           )
         : $preparedPdoStatement->fetchAll( PDO::FETCH_OBJ );
     }
+    SAY_hello( 'getAll: EXEC QUERY - FAILED' );
     return [];
   }
 
-  public function getFirst( $select = null )
+  public function getFirst( $selectExpr = null )
   {
-    $sql = $this->buildSql( $params, $select );
+    // SAY_hello( __METHOD__ );
+    $sql = $this->buildSql( $params, $selectExpr );
     $preparedPdoStatement = $this->db->prepare( $sql );
     if( $preparedPdoStatement->execute( $params ) )
     {
+      // SAY_hello( 'getFirst: EXEC QUERY - OK' );
       return $preparedPdoStatement->fetch( PDO::FETCH_OBJ );
     }
+    SAY_hello( 'getFirst: EXEC QUERY - FAILED' );
   }
 
   public function count()
   {
+    // SAY_hello( __METHOD__ );
     $sql = $this->buildSql( $params, 'COUNT(*)' );
     $preparedPdoStatement = $this->db->queryRaw($sql);
-    return $preparedPdoStatement->fetchColumn();
+    $count = $preparedPdoStatement->fetchColumn();
+    SHOW_me( $count, 'count' );
+    return $count;
   }
 
   /**
@@ -893,6 +952,7 @@ class PDOQuery
    */
   public function update( $data = null )
   {
+    SAY_hello( __METHOD__ );
     $values = [];
     $setPairs = [];
     if( is_object( $data ) ) { $data = (array) $data; }
@@ -905,19 +965,29 @@ class PDOQuery
     $sql = "UPDATE {$this->tablesExpr} SET {$setPairsSql}";
     $sql .= $this->buildCondSql( $params );
     $this->db->log[] = $sql;
+    SHOW_me( $sql, 'Update SQL' );
+    SHOW_me( json_encode( $params ), 'Update PDO Params' );
+    SHOW_me( json_encode( $values ), 'Update Values' );
     $preparedPdoStatement = $this->db->prepare( $sql );
     $preparedPdoStatement->execute( array_merge( $values, $params ) );
-    return $preparedPdoStatement->rowCount();
+    $affectedRows = $preparedPdoStatement->rowCount();
+    SHOW_me( $affectedRows, 'Update affectedRows' );
+    return $affectedRows;
   }
 
   public function delete()
   {
+    SAY_hello( __METHOD__ );
     $sql = "DELETE FROM {$this->tablesExpr}";
     $sql .= $this->buildCondSql( $params );
     $this->db->log[] = $sql;
+    SHOW_me( $sql, 'Delete SQL' );
+    SHOW_me( json_encode( $params ), 'Delete PDO Params' );
     $preparedPdoStatement = $this->db->prepare( $sql );
     $preparedPdoStatement->execute( $params );
-    return $preparedPdoStatement->rowCount();
+    $affectedRows = $preparedPdoStatement->rowCount();
+    SHOW_me( $affectedRows, 'Delete affectedRows' );
+    return $affectedRows;
   }
 
 } //end: Query Statement Class
@@ -942,7 +1012,7 @@ class PDOWhere
 {
   protected $whereExpr;
   protected $params;
-  protected $glue;
+  protected $glue = '';
 
   /*
    * @param string $whereExpr
@@ -954,10 +1024,11 @@ class PDOWhere
    */
   public function __construct( $whereExpr, $params = null, $options = null )
   {
+    // SAY_hello( __METHOD__ );
     $options = $options ?: [];
     if( isset( $options[ 'glue' ] ) )
     {
-      $this->glue = $options[ 'glue' ];
+      $this->glue =  ' ' . $options[ 'glue' ] . ' ';
     }
     if( isset( $options[ 'test' ] ) )
     {
@@ -981,13 +1052,14 @@ class PDOWhere
 
   public function build( &$params )
   {
+    // SAY_hello( __METHOD__ );
     if( ! $params ) { $params = []; }
     $params = array_merge( $params, $this->params );
     if( is_object( $this->whereExpr ) )
     { // I.e $this->whereExpr == instanceof PDOQuery
       $pdoQuery = $this->whereExpr;
-      return ' ' . $this->glue . $pdoQuery->buildWhereSql( $params );
+      return $this->glue . '(' . $pdoQuery->buildWhereSql( $params ) . ')';
     }
-    return ' ' . $this->glue . ' ' . $this->whereExpr;
+    return $this->glue . $this->whereExpr;
   }
 }
