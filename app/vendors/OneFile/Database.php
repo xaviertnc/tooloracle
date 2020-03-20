@@ -13,23 +13,27 @@ use Exception;
  * @update: C. Moller - 24 Jan 2017
  *   - Moved to OneFile
  *
- * @update: C. Moller - 19 Jan to 7 Mar 2020
+ * @update: C. Moller - 19 Jan to 20 Mar 2020
  *   - Total Refactor!
- *   - Add db->execRaw()
+ *   - Add db->cmd()
  *   - Add db->insertInto()
  *   - Add db->updateOrInsertInto()
  *   - Add db->batchUpdate()
  *   - Add db->arrayIsSingleRow()
  *   - Add db->indexList()
+ *   - Add db->query()->select()
  *   - Add db->query()->having()
  *   - Add db->query()->orHaving()
  *   - Add db->query()->update()
  *   - Add db->query()->delete()
- *   - Remove db->query()->addExpression()
+ *   - Add db->query()->build{.*}Sql()
+ *   - Change db->query() to db->query()
  *   - Change QueryStatement to PDOQuery
  *   - Change QueryExpression to PDOWhere
+ *   - Remove db->query()->addExpression()
  *   - Simplify classes + Change query builder syntax!
  *   - Re-write build() methods
+ *   - Update doc comments
  *
  * ------
  * Query:
@@ -51,11 +55,11 @@ use Exception;
  *    $db->subQuery()
  *     ->where('date1 BETWEEN (?,?)', [$minDate,$maxDate])         // Exclusive
  *     ->where('date2', [$fromDate,$toDate], ['test'=>'FROM TO'])  // Inclusive
- *     ->where('age', [$minAge,$maxAge], ['test'=>'FROM TO'])
- *     ->orWhere(is_weekend IS NOT NULL)
+ *     ->where('age'  , [$minAge  ,$maxAge], ['test'=>'FROM TO'])
+ *     ->orWhere('is_weekend IS NULL')
  *  )
  *
- *  ->where('tagCount<?', $db->subQuery('tblconfig')->getFirst('max_tags'))
+ *  ->where('tagCount<?', $db->subQuery('tblconfig')->getFirst()->max_tags)
  *
  *  ->orWhere('CONCAT(firstname," ",lastname) LIKE ?)', "%$nameTerm%")
  *  ->orWhere('name LIKE ?', "%$nameTerm%", ['ignore'=>[null,'']])
@@ -63,6 +67,20 @@ use Exception;
  *
  *  ->orderBy('date')  // Defaults to 'asc'
  *  ->orderBy('date desc, time')
+ *
+ *  ->groupBy('age')
+ *
+ *  ->having('TotalUsers>=?', 10)
+ *  ->having('TotalUsers<=?', 20)
+ *  ->orHaving(
+ *    $db->subQuery()
+ *      ->where('Awards<?', 3)
+ *      ->where(
+ *        $db->subQuery()
+ *          ->where('Skill>? AND Skill<?', [3000,5000])
+ *          ->orWhere('TotalPoints>?', 1000)
+ *      )
+ *  )
 
  *  ->limit(100)
  *  ->limit(100, 15)
@@ -79,6 +97,8 @@ use Exception;
  *
  *  ->getFirst();
  *  ->getFirst('id,desc');
+ *
+ *  ->count()
  *
  *
  * -------
@@ -141,6 +161,8 @@ class Database extends PDO
   protected $connection = array();
 
   /**
+   * Initialize a new database connection and
+   * DB service instance.
    *
    * @param array $config
    *   $config = [
@@ -184,101 +206,62 @@ class Database extends PDO
   }
 
   /**
-   * Raw SQL command
-   *
-   * NOTE: NO query builder, NO PDO placeholders, just SQL. It's your
-   * responsibility to escape query params.
+   * Executes SQL commands (For commands without quick methods)
    *
    * Examples:
    * ---------
-   * $db->execRaw( "INSERT INTO tblUsers (name,age) VALUES ('John','27')" );
-   * $db->execRaw( "UPDATE `tblUsers` SET `name`='Johnny' WHERE `id`='1'" );
-   * $db->execRaw( "DELETE FROM `tblUsers` WHERE `id`='1'" );
-   * $db->execRaw( 'SET GLOBAL log_output = "FILE"' );
-   * $db->execRaw( 'SET GLOBAL general_log_file = "nm_mysql.log"' );
-   * $db->execRaw( 'SET GLOBAL general_log = "ON"' );
+   * $db->cmd( 'SET GLOBAL log_output = ?', [ 'FILE' ] );
+   * $db->cmd( 'SET GLOBAL general_log_file = ?', [ 'nm_mysql.log' ] );
+   * $db->cmd( 'SET GLOBAL general_log = "ON"' );
    *
-   * @param string $sqlCommandStr
+   * @param string $cmdSqlStr
+   * @param array   $cmdParams Array of placeholder values.
    * @return integer Number of rows affected.
    */
-  public function execRaw( $sqlCommandStr )
+  public function cmd( $cmdSqlStr, $cmdParams = null )
   {
     // SAY_hello( __METHOD__ );
-    $affectedRows = parent::exec( $sqlCommandStr );
+    if( $cmdParams )
+    {
+      $preparedCommand = $this->prepare( $cmdSqlStr );
+      $affectedRows = $preparedCommand->execute( $cmdParams );
+    }
+    else
+    {
+      $affectedRows = parent::exec( $cmdSqlStr );
+    }
     return $affectedRows;
-  }
-
-  /**
-   * SQL Command with PDO placeholders
-   *
-   * NOTE: NO query builder, but PDO placeholders are allowed!
-   *
-   * @param  string  $sqlCommandStr e.g. 'UPDATE tblusers SET name=? WHERE id=?'
-   * @param  array   $queryParams Array of placeholder values.
-   * @return integer Number of affected rows.
-   */
-  public function exec( $sqlCommandStr, $queryParams = null )
-  {
-    // SAY_hello( __METHOD__ );
-    $preparedQuery = $this->prepare( $sqlCommandStr );
-    $affectedRows = $preparedQuery->execute( $queryParams );
-    return $affectedRows;
-  }
-
-  /**
-   * Syntax sugar. $db->execRaw() Clone.
-   * @param string $sqlCommandStr
-   * @return integer Number of rows affected.
-   */
-  public function cmd( $sqlCommandStr )
-  {
-    // SAY_hello( __METHOD__ );
-    return $this->execRaw( $sqlCommandStr );
-  }
-
-  /**
-   * Raw SQL query
-   *
-   * NOTE: NO query builder, NO PDO placeholders, just SQL. It's your
-   * responsibility to escape query params.
-   *
-   * Examples:
-   * ---------
-   * $db->queryRaw( 'SELECT * FROM tblusers' )
-   * $db->queryRaw( 'SELECT COUNT(*) AS TotalNumberOfUsers FROM tblusers' )
-   * $db->queryRaw( 'SHOW COLUMNS FROM tblusers' )
-   *
-   * @param string $sqlQueryStr
-   * @return object -*UNPREPARED*- PDOStatement object.
-   */
-  public function queryRaw( $sqlQueryStr )
-  {
-    // SAY_hello( __METHOD__ );
-    return parent::query( $sqlQueryStr );
   }
 
   /**
    * Incremental (multi-stage) PDO query builder and results fetcher.
    *
-   * This method is especially usefull when you have varying query conditions.
-   * A common use case would be to generate queries for list-type pages...
-   * $db->query() allows you to add various filter, sorting and pagination
-   * options dynamically / incrementally while keeping your code clean
-   * and readable.
+   * $db->query() makes SQL easier and cleaner to write when you have
+   * multiple conditional segments that depend on the current state or
+   * request.
    *
-   * @param string $tablesExpr Required e.g 'tblusers', 'tblusers AS u'
-   * @param array $options Store instance specific META data here.
-   * @return PDOQuery
+   * NOTE: We override PDO::query(). If you ever need to use the
+   * legacy implementation, call db->query() with `options`='legacy'
+   *
+   * @param string $tablesExpr Required e.g 'tblusers', 'tblusers u'
+   * @param array|string $options Select LEGACY mode or store metadata.
+   * @return PDOQuery|PDOStatement
    */
   public function query( $tablesExpr, $options = null )
   {
     // SAY_hello( __METHOD__ );
+    if( $options == 'legacy' )
+    {
+      $querySqlStr = $tablesExpr;
+      return parent::query( $querySqlStr );
+    }
     return new PDOQuery( $this, $tablesExpr, $options );
   }
 
   /**
-   * Syntax sugar. The same as $db->query() with optional $tablesExpr.
-   * Used to create nested queries.
+   * Syntax sugar. Used to create nested queries.
+   * The same as $db->query() except for OPTIONAL $tablesExpr.
+   *
    * @param string $tablesExpr Optional
    * @param array $options Optional
    * @return PDOQuery
@@ -286,25 +269,8 @@ class Database extends PDO
   public function subQuery( $tablesExpr = null, $options = null )
   {
     // SAY_hello( __METHOD__ );
-    return $this->query( $tablesExpr, $options );
+    return new PDOQuery( $this, $tablesExpr, $options );
   }
-
-
-  /**
-   * Deletes ALL rows from a table.
-   *
-   * NOTE: Can NOT be rolled back!
-   * NOTE: Requires DROP privilage!
-   * NOTE: Resets Auto increment to 1
-   * @param  string $tableName
-   * @return boolean Success / Fail
-   */
-  public function truncate( $tableName = null )
-  {
-    // SAY_hello( __METHOD__ );
-    return $this->exec( 'TRUNCATE TABLE ?', $tableName );
-  }
-
 
   /**
    * Inserts a single or multiple data rows into a database table.
@@ -368,7 +334,7 @@ class Database extends PDO
     $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
     SHOW_me( $affectedRows, 'Batch Insert Into affectedRows' );
     return $affectedRows;
-  } // end: batchInsert
+  } // end: insertInto
 
   /**
    * Batch update OR insert multiple database rows in one go.
@@ -550,7 +516,7 @@ class Database extends PDO
     $this->log[] = 'affectedRows: ' . print_r( $affectedRows, true );
     SHOW_me( $affectedRows, 'Batch Update or Insert affectedRows' );
     return $affectedRows;
-  } // end: updateOrInsert
+  } // end: updateOrInsertInto
 
   /**
    * Update multiple database table rows in one go. (UPDATE ONLY)
@@ -807,6 +773,13 @@ class PDOQuery
     }
     $this->havingExpressions[] = new PDOWhere( $havingExpr, $params, $options );
     return $this;
+  }
+
+  public function orHaving( $havingExpr, $params = null, $options = null )
+  {
+    // SAY_hello( __METHOD__ );
+    $options = array_merge( $options?:[], [ 'glue' => 'OR' ] );
+    return $this->having( $havingExpr, $params, $options );
   }
 
   public function orderBy( $orderBy )
