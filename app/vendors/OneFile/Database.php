@@ -706,9 +706,9 @@ class PDOQuery
     $options = $options ?: [];
     $params = $params ? ( is_array( $params ) ? $params : [ $params ] ) : [];
     // Only check "ignore" on single param expressions.
-    if( count( $params ) == 1 and isset( $options[ 'ignore' ] ) )
+    if( count( $params ) <= 1 and array_key_exists( 'ignore', $options ) )
     {
-      $value = reset( $params );
+      $value = $params ? reset( $params ) : null;
       $valuesToIgnore = $options[ 'ignore' ];
       if( $value === $valuesToIgnore or is_array( $valuesToIgnore ) and
         in_array( $value, $valuesToIgnore ) )
