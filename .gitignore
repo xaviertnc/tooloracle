@@ -8,3 +8,4 @@ app/storage
 adminer
 webcoder
 bkp
+.tmp*
